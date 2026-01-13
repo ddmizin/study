@@ -32,11 +32,11 @@ static bool decode7(uint8_t& b) {
 
     if (syndrome > 0 && syndrome <= 7) {
         b ^= (1 << (syndrome - 1));
-    } else if (syndrome != 0) {
+    } 
+    else if (syndrome != 0) {
         std::cerr << "Archive corrupted: multiple bit errors\n";
         return false;
     }
-
     b = (d0 << 0) | (d1 << 1) | (d2 << 2) | (d3 << 3);
     return true;
 }
@@ -55,7 +55,9 @@ bool decodeHamming(std::vector<uint8_t>& data) {
     for (size_t i = 0; i + 1 < data.size(); i += 2) {
         uint8_t lo = data[i];
         uint8_t hi = data[i + 1];
-        if (!decode7(lo) || !decode7(hi)) return false;
+        if (!decode7(lo) || !decode7(hi)) {
+            return false;
+        }
         decoded.push_back((hi << 4) | lo);
     }
     data = decoded;

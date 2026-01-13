@@ -20,13 +20,14 @@ static void writeFile(const std::string& name, const std::vector<uint8_t>& data)
 
 static std::vector<Entry> readArchive(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
-    if (!in) throw std::runtime_error("Cannot open archive");
-
+    if (!in) {
+        throw std::runtime_error("Cannot open archive");
+    }
     char sig[8]{};
     in.read(sig, 7);
-    if (std::string(sig) != SIGNATURE)
+    if (std::string(sig) != SIGNATURE) {
         throw std::runtime_error("Invalid archive format");
-
+    }
     size_t count;
     in.read(reinterpret_cast<char*>(&count), sizeof(count));
 
@@ -43,9 +44,9 @@ static std::vector<Entry> readArchive(const std::string& path) {
         std::vector<uint8_t> encoded(dataLen);
         in.read(reinterpret_cast<char*>(encoded.data()), dataLen);
 
-        if (!decodeHamming(encoded))
+        if (!decodeHamming(encoded)) {
             throw std::runtime_error("Archive corrupted");
-
+        }
         e.data = encoded;
         entries.push_back(e);
     }
@@ -74,33 +75,47 @@ static void writeArchive(const std::string& path, const std::vector<Entry>& entr
 
 void createArchive(const std::string& archive, const std::vector<std::string>& files) {
     std::vector<Entry> entries;
-    for (const auto& f : files)
+    for (const auto& f : files) {
         entries.push_back({f, readFile(f)});
+    }
     writeArchive(archive, entries);
 }
 
 void listArchive(const std::string& archive) {
-    for (const auto& e : readArchive(archive))
+    for (const auto& e : readArchive(archive)) {
         std::cout << e.name << "\n";
+    }
 }
 
-void extractArchive(const std::string& archive) {
-    for (const auto& e : readArchive(archive))
-        writeFile(e.name, e.data);
+void extractArchive(const std::string& archive, const std::vector<std::string>& files) {
+    auto entries = readArchive(archive);
+    if (files.empty()) {
+        for (const auto& e : entries) {
+            writeFile(e.name, e.data);
+        }
+        return;
+    }
+
+    for (const auto& name : files) {
+        auto it = std::find_if(entries.begin(), entries.end(), [&](const Entry& e) { return e.name == name; });
+        if (it != entries.end()) {
+            writeFile(it->name, it->data);
+        } 
+        else {
+            std::cout << "File not found in archive: " << name << "\n";
+        }
+    }
 }
 
 void appendFile(const std::string& archive, const std::string& file) {
     auto entries = readArchive(archive);
     auto data = readFile(file);
-
-    auto it = std::find_if(entries.begin(), entries.end(),
-        [&](const Entry& e) { return e.name == file; });
+    auto it = std::find_if(entries.begin(), entries.end(), [&](const Entry& e) { return e.name == file; });
 
     if (it == entries.end()) {
-        // файла нет — просто добавляем
         entries.push_back({file, data});
-    } else {
-        // конфликт имён
+    } 
+    else {
         std::cout << "File already exists in archive: " << file << "\n";
         std::cout << "1 - overwrite\n";
         std::cout << "2 - append content\n";
@@ -121,17 +136,12 @@ void appendFile(const std::string& archive, const std::string& file) {
             return;
         }
     }
-
     writeArchive(archive, entries);
 }
 
-
 void deleteFile(const std::string& archive, const std::string& file) {
     auto entries = readArchive(archive);
-    entries.erase(
-        std::remove_if(entries.begin(), entries.end(),
-                       [&](const Entry& e){ return e.name == file; }),
-        entries.end());
+    entries.erase(std::remove_if(entries.begin(), entries.end(), [&](const Entry& e){ return e.name == file; }), entries.end());
     writeArchive(archive, entries);
 }
 
@@ -140,9 +150,7 @@ static std::string addSuffixToFilename(const std::string& name, int index) {
     if (dot == std::string::npos) {
         return name + "(" + std::to_string(index) + ")";
     }
-    return name.substr(0, dot) +
-           "(" + std::to_string(index) + ")" +
-           name.substr(dot);
+    return name.substr(0, dot) + "(" + std::to_string(index) + ")" + name.substr(dot);
 }
 
 void mergeArchives(const std::string& a, const std::string& b, const std::string& out) {
@@ -150,21 +158,25 @@ void mergeArchives(const std::string& a, const std::string& b, const std::string
     auto eb = readArchive(b);
 
     for (auto& e : eb) {
-        auto it = std::find_if(ea.begin(), ea.end(),
-            [&](const Entry& x){ return x.name == e.name; });
+        auto it = std::find_if(ea.begin(), ea.end(), [&](const Entry& x){ return x.name == e.name; });
 
         if (it == ea.end()) {
             ea.push_back(e);
-        } else {
-            std::cout << "Conflict: " << e.name << "\n"
-                      << "1 - merge\n2 - cancel\n3 - keep both\nChoice: ";
+        } 
+        else {
+            std::cout << "Conflict: " << e.name << "\n" << "1 - merge\n2 - cancel\n3 - keep both\nChoice: ";
             int c; std::cin >> c;
-            if (c == 1) it->data.insert(it->data.end(), e.data.begin(), e.data.end());
+            if (c == 1) {
+                it->data.insert(it->data.end(), e.data.begin(), e.data.end());
+            }
             else if (c == 3) {
                 it->name = addSuffixToFilename(it->name, 1);
                 e.name  = addSuffixToFilename(e.name, 2);
                 ea.push_back(e);
-            } else return;
+            } 
+            else {
+                return;
+            }
         }
     }
     writeArchive(out, ea);
