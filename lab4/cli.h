@@ -1,4 +1,4 @@
 #pragma once
 #include <string>
 
-void parseCLI(int argc, char** argv);
+void ParseCLI(int argc, char** argv);

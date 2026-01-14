@@ -1,7 +1,8 @@
 #include "utils.h"
 #include <filesystem>
+#include <string>
 
-void ensureDirectoryExists(const std::string& filePath) {
+void EnsureDirectoryExists(const std::string& filePath) {
     namespace fs = std::filesystem;
     fs::path p(filePath);
     fs::path dir = p.parent_path();

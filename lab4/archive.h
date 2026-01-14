@@ -8,9 +8,9 @@ struct Entry {
     std::vector<uint8_t> data;
 };
 
-void createArchive(const std::string& archive, const std::vector<std::string>& files);
-void listArchive(const std::string& archive);
-void extractArchive(const std::string& archive, const std::vector<std::string>& files);
-void appendFile(const std::string& archive, const std::string& file);
-void deleteFile(const std::string& archive, const std::string& file);
-void mergeArchives(const std::string& a, const std::string& b, const std::string& out);
+void CreateArchive(const std::string& archive, const std::vector<std::string>& files);
+void ListArchive(const std::string& archive);
+void ExtractArchive(const std::string& archive, const std::vector<std::string>& files);
+void AppendFile(const std::string& archive, const std::string& file);
+void DeleteFile(const std::string& archive, const std::string& file);
+void MergeArchives(const std::string& a, const std::string& b, const std::string& out);

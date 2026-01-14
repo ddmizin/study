@@ -1,7 +1,10 @@
 #include "hamming.h"
 #include <iostream>
+#include <cstdint>
+#include <vector>
+#include <cstddef>
 
-static uint8_t encode4(uint8_t d) {
+static uint8_t Encode4(uint8_t d) {
     uint8_t d0 = (d >> 0) & 1;
     uint8_t d1 = (d >> 1) & 1;
     uint8_t d2 = (d >> 2) & 1;
@@ -15,7 +18,7 @@ static uint8_t encode4(uint8_t d) {
            (p3 << 3) | (d1 << 4) | (d2 << 5) | (d3 << 6);
 }
 
-static bool decode7(uint8_t& b) {
+static bool Decode7(uint8_t& b) {
     uint8_t p1 = (b >> 0) & 1;
     uint8_t p2 = (b >> 1) & 1;
     uint8_t d0 = (b >> 2) & 1;
@@ -41,21 +44,21 @@ static bool decode7(uint8_t& b) {
     return true;
 }
 
-std::vector<uint8_t> encodeHamming(const std::vector<uint8_t>& data) {
+std::vector<uint8_t> EncodeHamming(const std::vector<uint8_t>& data) {
     std::vector<uint8_t> out;
     for (uint8_t b : data) {
-        out.push_back(encode4(b & 0xF));
-        out.push_back(encode4(b >> 4));
+        out.push_back(Encode4(b & 0xF));
+        out.push_back(Encode4(b >> 4));
     }
     return out;
 }
 
-bool decodeHamming(std::vector<uint8_t>& data) {
+bool DecodeHamming(std::vector<uint8_t>& data) {
     std::vector<uint8_t> decoded;
     for (size_t i = 0; i + 1 < data.size(); i += 2) {
         uint8_t lo = data[i];
         uint8_t hi = data[i + 1];
-        if (!decode7(lo) || !decode7(hi)) {
+        if (!Decode7(lo) || !Decode7(hi)) {
             return false;
         }
         decoded.push_back((hi << 4) | lo);

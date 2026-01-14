@@ -2,121 +2,140 @@
 #include "hamming.h"
 #include "utils.h"
 #include <fstream>
+#include <cstring>
 #include <iostream>
+#include <cstdint>
 #include <filesystem>
 #include <algorithm>
+#include <string>
+#include <vector>
+#include <iterator>
+#include <stdexcept>
 
-static const char SIGNATURE[] = "HAF2026";
+static const char kSignature[] = "HAF2026";
 
-static std::vector<uint8_t> readFile(const std::string& path) {
+static std::vector<uint8_t> ReadFile(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
     return {std::istreambuf_iterator<char>(in), {}};
 }
 
-static void writeFile(const std::string& name, const std::vector<uint8_t>& data) {
-    ensureDirectoryExists(name);
+static void WriteFile(const std::string& name, const std::vector<uint8_t>& data) {
+    EnsureDirectoryExists(name);
     std::ofstream out(name, std::ios::binary);
     out.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
 
 
-static std::vector<Entry> readArchive(const std::string& path) {
+static std::vector<Entry> ReadArchive(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
-    if (!in) {
-        throw std::runtime_error("Cannot open archive");
-    }
+    if (!in) throw std::runtime_error("Cannot open archive");
+
     char sig[8]{};
     in.read(sig, 7);
-    if (std::string(sig, 7) != SIGNATURE) {
+    if (std::string(sig) != kSignature)
         throw std::runtime_error("Invalid archive format");
-    }
+
+    std::vector<uint8_t> encoded(std::istreambuf_iterator<char>(in), {});
+
+    if (!DecodeHamming(encoded))
+        throw std::runtime_error("Archive corrupted");
+
+    size_t pos = 0;
+    auto read = [&](void* dst, size_t sz) {std::memcpy(dst, encoded.data() + pos, sz); pos += sz;};
+
     size_t count;
-    in.read(reinterpret_cast<char*>(&count), sizeof(count));
+    read(&count, sizeof(count));
 
     std::vector<Entry> entries;
     for (size_t i = 0; i < count; ++i) {
         Entry e;
-        size_t nameLen, dataLen;
+        size_t name_len, data_len;
 
-        in.read(reinterpret_cast<char*>(&nameLen), sizeof(nameLen));
-        e.name.resize(nameLen);
-        in.read(e.name.data(), nameLen);
+        read(&name_len, sizeof(name_len));
+        e.name.resize(name_len);
+        read(e.name.data(), name_len);
 
-        in.read(reinterpret_cast<char*>(&dataLen), sizeof(dataLen));
-        std::vector<uint8_t> encoded(dataLen);
-        in.read(reinterpret_cast<char*>(encoded.data()), dataLen);
+        read(&data_len, sizeof(data_len));
+        e.data.resize(data_len);
+        read(e.data.data(), data_len);
 
-        if (!decodeHamming(encoded)) {
-            throw std::runtime_error("Archive corrupted");
-        }
-        e.data = encoded;
         entries.push_back(e);
     }
+
     return entries;
 }
 
-static void writeArchive(const std::string& path, const std::vector<Entry>& entries) {
-    ensureDirectoryExists(path);
-    std::ofstream out(path, std::ios::binary | std::ios::trunc);
 
-    out.write(SIGNATURE, 7);
+static void WriteArchive(const std::string& path, const std::vector<Entry>& entries) {
+    EnsureDirectoryExists(path);
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    out.write(kSignature, 7);
+
+    std::vector<uint8_t> payload;
+
+    auto push = [&](const void* p, size_t sz) {const uint8_t* b = reinterpret_cast<const uint8_t*>(p); payload.insert(payload.end(), b, b + sz);};
+
     size_t count = entries.size();
-    out.write(reinterpret_cast<char*>(&count), sizeof(count));
+    push(&count, sizeof(count));
 
     for (const auto& e : entries) {
-        auto encoded = encodeHamming(e.data);
-        size_t nameLen = e.name.size();
-        size_t dataLen = encoded.size();
+        size_t name_len = e.name.size();
+        size_t data_len = e.data.size();
 
-        out.write(reinterpret_cast<char*>(&nameLen), sizeof(nameLen));
-        out.write(e.name.data(), nameLen);
-        out.write(reinterpret_cast<char*>(&dataLen), sizeof(dataLen));
-        out.write(reinterpret_cast<char*>(encoded.data()), dataLen);
+        push(&name_len, sizeof(name_len));
+        push(e.name.data(), name_len);
+
+        push(&data_len, sizeof(data_len));
+        push(e.data.data(), data_len);
     }
+
+    auto encoded = EncodeHamming(payload);
+    out.write(reinterpret_cast<char*>(encoded.data()), encoded.size());
 }
 
-void createArchive(const std::string& archive, const std::vector<std::string>& files) {
+
+void CreateArchive(const std::string& archive, const std::vector<std::string>& files) {
     std::vector<Entry> entries;
     for (const auto& f : files) {
-        entries.push_back({f, readFile(f)});
+        entries.push_back({f, ReadFile(f)});
     }
-    writeArchive(archive, entries);
+    WriteArchive(archive, entries);
 }
 
-void listArchive(const std::string& archive) {
-    for (const auto& e : readArchive(archive)) {
+void ListArchive(const std::string& archive) {
+    for (const auto& e : ReadArchive(archive)) {
         std::cout << e.name << "\n";
     }
 }
 
-void extractArchive(const std::string& archive, const std::vector<std::string>& files)
+void ExtractArchive(const std::string& archive, const std::vector<std::string>& files)
 {
-    auto entries = readArchive(archive);
+    auto entries = ReadArchive(archive);
 
-    auto extractOne = [&](const Entry& e) {
+    auto extract_one = [&](const Entry& e) {
         std::filesystem::path p(e.name);
         std::string filename = p.filename().string();
 
-        writeFile(filename, e.data);
+        WriteFile(filename, e.data);
     };
 
     if (files.empty()) {
         for (const auto& e : entries) {
-            extractOne(e);
+            extract_one(e);
         }
     } else {
         for (const auto& name : files) {
             auto it = std::find_if(entries.begin(), entries.end(), [&](const Entry& e) {return std::filesystem::path(e.name).filename()== std::filesystem::path(name).filename();});
             if (it != entries.end()) {
-                extractOne(*it);
+                extract_one(*it);
             }
         }
     }
 }
 
-void appendFile(const std::string& archive, const std::string& file) {
-    auto entries = readArchive(archive);
-    auto data = readFile(file);
+void AppendFile(const std::string& archive, const std::string& file) {
+    auto entries = ReadArchive(archive);
+    auto data = ReadFile(file);
     auto it = std::find_if(entries.begin(), entries.end(), [&](const Entry& e) { return e.name == file; });
 
     if (it == entries.end()) {
@@ -143,16 +162,16 @@ void appendFile(const std::string& archive, const std::string& file) {
             return;
         }
     }
-    writeArchive(archive, entries);
+    WriteArchive(archive, entries);
 }
 
-void deleteFile(const std::string& archive, const std::string& file) {
-    auto entries = readArchive(archive);
+void DeleteFile(const std::string& archive, const std::string& file) {
+    auto entries = ReadArchive(archive);
     entries.erase(std::remove_if(entries.begin(), entries.end(), [&](const Entry& e){ return e.name == file; }), entries.end());
-    writeArchive(archive, entries);
+    WriteArchive(archive, entries);
 }
 
-static std::string addSuffixToFilename(const std::string& name, int index) {
+static std::string AddSuffixToFileName(const std::string& name, int index) {
     size_t dot = name.find_last_of('.');
     if (dot == std::string::npos) {
         return name + "(" + std::to_string(index) + ")";
@@ -160,9 +179,9 @@ static std::string addSuffixToFilename(const std::string& name, int index) {
     return name.substr(0, dot) + "(" + std::to_string(index) + ")" + name.substr(dot);
 }
 
-void mergeArchives(const std::string& a, const std::string& b, const std::string& out) {
-    auto ea = readArchive(a);
-    auto eb = readArchive(b);
+void MergeArchives(const std::string& a, const std::string& b, const std::string& out) {
+    auto ea = ReadArchive(a);
+    auto eb = ReadArchive(b);
 
     for (auto& e : eb) {
         auto it = std::find_if(ea.begin(), ea.end(), [&](const Entry& x){ return x.name == e.name; });
@@ -177,8 +196,8 @@ void mergeArchives(const std::string& a, const std::string& b, const std::string
                 it->data.insert(it->data.end(), e.data.begin(), e.data.end());
             }
             else if (c == 3) {
-                it->name = addSuffixToFilename(it->name, 1);
-                e.name  = addSuffixToFilename(e.name, 2);
+                it->name = AddSuffixToFileName(it->name, 1);
+                e.name  = AddSuffixToFileName(e.name, 2);
                 ea.push_back(e);
             } 
             else {
@@ -186,5 +205,5 @@ void mergeArchives(const std::string& a, const std::string& b, const std::string
             }
         }
     }
-    writeArchive(out, ea);
+    WriteArchive(out, ea);
 }

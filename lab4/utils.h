@@ -1,4 +1,4 @@
 #pragma once
 #include <string>
 
-void ensureDirectoryExists(const std::string& filePath);
+void EnsureDirectoryExists(const std::string& filePath);
