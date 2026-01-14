@@ -3,6 +3,7 @@
 #include "utils.h"
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 #include <algorithm>
 
 static const char SIGNATURE[] = "HAF2026";
@@ -18,6 +19,7 @@ static void writeFile(const std::string& name, const std::vector<uint8_t>& data)
     out.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
 
+
 static std::vector<Entry> readArchive(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
     if (!in) {
@@ -25,7 +27,7 @@ static std::vector<Entry> readArchive(const std::string& path) {
     }
     char sig[8]{};
     in.read(sig, 7);
-    if (std::string(sig) != SIGNATURE) {
+    if (std::string(sig, 7) != SIGNATURE) {
         throw std::runtime_error("Invalid archive format");
     }
     size_t count;
@@ -87,22 +89,27 @@ void listArchive(const std::string& archive) {
     }
 }
 
-void extractArchive(const std::string& archive, const std::vector<std::string>& files) {
+void extractArchive(const std::string& archive, const std::vector<std::string>& files)
+{
     auto entries = readArchive(archive);
+
+    auto extractOne = [&](const Entry& e) {
+        std::filesystem::path p(e.name);
+        std::string filename = p.filename().string();
+
+        writeFile(filename, e.data);
+    };
+
     if (files.empty()) {
         for (const auto& e : entries) {
-            writeFile(e.name, e.data);
+            extractOne(e);
         }
-        return;
-    }
-
-    for (const auto& name : files) {
-        auto it = std::find_if(entries.begin(), entries.end(), [&](const Entry& e) { return e.name == name; });
-        if (it != entries.end()) {
-            writeFile(it->name, it->data);
-        } 
-        else {
-            std::cout << "File not found in archive: " << name << "\n";
+    } else {
+        for (const auto& name : files) {
+            auto it = std::find_if(entries.begin(), entries.end(), [&](const Entry& e) {return std::filesystem::path(e.name).filename()== std::filesystem::path(name).filename();});
+            if (it != entries.end()) {
+                extractOne(*it);
+            }
         }
     }
 }
