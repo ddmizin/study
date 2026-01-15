@@ -10,3 +10,6 @@ add_executable(${PROJECT_NAME}
         temp_vector.cpp
         test.cpp
 )
+
+add_subdirectory(Hamming_code)
+add_subdirectory(Sort)
