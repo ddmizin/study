@@ -1,0 +1,6 @@
+add_executable(${PROJECT_NAME} commands.cpp)
+add_executable(${PROJECT_NAME} data_types.cpp)
+add_executable(${PROJECT_NAME} enum.cpp)
+add_executable(${PROJECT_NAME} fstream.cpp)
+add_executable(${PROJECT_NAME} pointer_links.cpp)
+add_executable(${PROJECT_NAME} commands.cpp)
