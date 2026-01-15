@@ -1,10 +1,14 @@
-add_executable(
-    hamarc
-    main.cpp
-    utils.cpp
-    hamming.cpp
-    cli.cpp
-    archive.cpp
-)
+cmake_minimum_required(VERSION 3.20)
+project(HamarcProject)
 
-target_compile_features(hamarc PRIVATE cxx_std_20)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_executable(
+        hamarc
+        main.cpp
+        utils.cpp
+        hamming.cpp
+        cli.cpp
+        archive.cpp
+)
