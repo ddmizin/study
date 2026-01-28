@@ -16,4 +16,5 @@ add_executable(${PROJECT_NAME}
         useful.cpp
         vector_string.cpp
         while_for_if_switch.cpp
+        classes.cpp
 )
