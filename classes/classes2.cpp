@@ -86,7 +86,6 @@ Singleton* Singleton::ptr = nullptr;
 
 struct Latitude {
     double value;
-
     explicit Latitude(double value): value(value) {}
     explicit operator double() const {
         return value;
@@ -117,19 +116,24 @@ BigInteger operator""_bi(unsigned long long x){
     return BigInteger();
 }
 
-int main() {
-    // String s; // default initialization
-    // String s2(5, 'r');
-    // String s3 = {'a', 'b', 'c', 'd'};
-    // String s4 = s3;
-    // s2 = s2;
-    // std::cout << s2.arr;
 
-    // S::g();
-    S s;
-    // const S& r = s;
-    // s.f();
-    // r.f();
+std::ostream& operator<<(std::ostream& out, const String& str);
+std::istream& operator>>(std::istream& in, const String& str);
+
+
+int main() {
+    String s; // default initialization
+    String s2(5, 'r');
+    String s3 = {'a', 'b', 'c', 'd'};
+    String s4 = s3;
+    s2 = s2;
+    std::cout << s2.arr << '\n';
+
+    S::g();
+    S sf;
+    const S& r = sf;
+    sf.f();
+    r.f();
 
     Singleton& slt = Singleton::GetObject();
     Latitude l(4.6);

@@ -64,6 +64,7 @@ public:
     }
 };
 
+
 int main(){
     S s;
     std::cout << s.x << '\n';

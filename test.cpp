@@ -1,33 +1,24 @@
 #include <iostream>
-#include <vector>
-#include <algorithm>
+#include <compare>
+
+class Complex2 {
+    double real, imag;
+public:
+    Complex2(double r, double i) : real(r), imag(i) {}
+    
+    // Автоматическая генерация всех операторов сравнения
+    auto operator<=>(const Complex2& other) const = default;
+};
 
 int main() {
-    int n, m;
-    std::cin >> n;
-    std::vector <int> a(n);
-    for (int i = 0; i < n; i++) {
-        std::cin >> a[i];
-    }
+    Complex2 a(1.0, 2.0);
+    Complex2 b(1.0, 2.0);
+    Complex2 c(2.0, 1.0);
     
-    std::cin >> m;
-    std::vector <int> b(m);
-    for (int i = 0; i < m; i++) {
-        std::cin >> b[i];
-    }
+    std::cout << std::boolalpha;
+    std::cout << "a == b: " << (a == b) << std::endl;  // true
+    std::cout << "a != b: " << (a != b) << std::endl;  // false
+    std::cout << "a < c: " << (a < c) << std::endl;    // зависит от порядка членов
     
-    std::vector <std::vector <int>> d(n + 1, std::vector <int>(m + 1, 0));
-    
-    for (int i = 1; i <= n; i++) {
-        for (int j = 1; j <= m; j++) {
-            if (a[i - 1] == b[j - 1]) {
-                d[i][j] = d[i - 1][j - 1] + 1;
-            } 
-            else {
-                d[i][j] = std::max(d[i - 1][j], d[i][j - 1]);
-            }
-        }
-    }
-    
-    std::cout << d[n][m];
+    return 0;
 }
