@@ -31,14 +31,15 @@ struct Son: Mom {
 struct Base {
     int x;
 
-    void f(int) {
-        std::cout << 1;
+    void f(double) {
+        std::cout << 1 << '\n';
     }
 };
 
 struct Derived: Base {
-    int f(double) {
-        std::cout << 2;
+    using Base::f;
+    int f(int) {
+        std::cout << 2 << '\n';
         return 0;
     }
 };
@@ -49,5 +50,6 @@ int main() {
     // s.h(g);
 
     Derived d;
-    d.f(0);
+    d.f(0.6);
+    d.Base::f(0);
 }
