@@ -58,11 +58,15 @@ struct Circle: Shape {
 };
 
 int main() {
-    // Derived d;
-    // Base& b = d;
-    // Base* bp = new Derived();
-    // b.f();
-    // delete bp;
+    Derived d;
+    Base& b = d;
+    Base* bp = new Derived();
+    b.f();
+    delete bp;
+    std::cout << typeid(b).name() << '\n';
+    int x;
+    std::cout << typeid(x).name() << '\n';
+
     Square sq(1.0);
     Circle sc(2.0);
     Shape& s1 = sq;
@@ -79,5 +83,9 @@ int main() {
         delete s;
     }
 
-    std::cout << sc.Shape::area();
+    std::cout << sc.Shape::area() << '\n';
+    std::cout << typeid(s1).name() << '\n';
+
+    Derived* pd = dynamic_cast<Derived*>(&b);
+    std::cout << typeid(pd).name() << '\n';
 }
