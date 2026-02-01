@@ -58,6 +58,47 @@ struct A<T&> {};
 template <typename T>
 struct A<const T> {};
 
+// шаблонная рекурсия
+
+template <int N>
+struct Fibonacci {
+    static constexpr int value = Fibonacci<N-1>::value + Fibonacci<N-2>::value;
+};
+
+template<>
+struct Fibonacci<1> {
+    static constexpr int value = 1;
+};
+
+template<>
+struct Fibonacci<0> {
+    static constexpr int value = 1;
+};
+
+
+template <int N, int D>
+struct IsPrimeHelper {  
+    static constexpr bool value = N%D == 0 ? false : IsPrimeHelper<N, D - 1>::value;
+};
+
+template <int N>
+struct IsPrimeHelper<N, 1> {  
+    static constexpr bool value = true;
+};
+
+template <int N>
+struct IsPrime {
+    static constexpr bool value = IsPrimeHelper<N, N - 1>::value;
+};
+
+template <>
+struct IsPrime<1> {
+    static constexpr bool value = false;
+};
+
+template <int N>
+constexpr bool is_prime = IsPrime<N>::value; // шаблонная переменная
+
 int main() {
     int x = 2;
     int& z = x;
@@ -68,4 +109,9 @@ int main() {
     f(x);
 
     S<int, int> s;
+    
+    static_assert(is_prime<257>); // error if expression = false
+    std::cout << Fibonacci<20>::value << '\n';
+    std::string result = is_prime<257> == 1 ? "Is_prime" : "Is_not_prime";
+    std::cout << result << '\n';
 }
