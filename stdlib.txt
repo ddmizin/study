@@ -1,0 +1,114 @@
+#include <cstdlib>
+// malloc(size_t size)
+int* arr = (int*)malloc(10 * sizeof(int)); // Выделяет блок неинициализированной памяти заданного размера в байтах. Возвращает void*.
+
+// calloc(size_t num, size_t size)
+int* arr = (int*)calloc(10, sizeof(int)); // Выделяет память для массива из num элементов, каждый размером size байт, и заполняет нулями.
+
+// realloc(void* ptr, size_t new_size)
+int* arr = (int*)realloc(arr, 20 * sizeof(int)); // Изменяет размер ранее выделенного блока памяти. Может переместить его.
+
+// free(void* ptr)
+int* free(arr); // Освобождает память, выделенную malloc, calloc или realloc.
+
+==========================================================================================================
+
+#include <cstring>
+// strlen(const char* str)
+int len = strlen("Hello"); // Возвращает длину строки без учета '\0'.
+
+// strcpy(char* dest, const char* src)
+strcpy(buf, "Hello"); // Копирует строку src в dest включая '\0'.
+
+// strcat(char* dest, const char* src)
+strcat(buf, " World"); // Добавляет строку src в конец строки в dest.
+
+// strncat(char* dest, const char* src, size_t count)
+strncat(buf, src, sizeof(buf) - strlen(buf) - 1); // Добавляет до count символов. Гарантированно добавляет '\0'.
+
+// strcmp(const char* lhs, const char* rhs)
+if(strcmp(str, "key") == 0) {...} // Сравнивает строки лексикографически. Возвращает: <0 (lhs < rhs), 0 (равны), >0 (lhs > rhs).
+
+// strstr(const char* str, const char* target)
+if(strstr(path, ".txt")) {...} // Ищет первое вхождение подстроки target в строке str. Возвращает указатель на найденное место или NULL.
+
+// strchr(const char* str, int ch)
+char* p = strchr(str, ','); // Ищет первое вхождение символа ch в строке str.
+
+==========================================================================================================
+
+#include <cstring>
+// memcpy(void* dest, const void* src, size_t count)
+memcpy(arr2, arr1, 10 * sizeof(int)); // Копирует ровно count байт из src в dest. Области не должны перекрываться.
+
+// memmove(void* dest, const void* src, size_t count)
+memmove(arr + 1, arr, 5 * sizeof(int)); // Копирует count байт из src в dest. Области могут перекрываться.
+
+// memset(void* dest, int ch, size_t count)
+memset(arr, 0, 10 * sizeof(int)); // Заполняет первые count байт памяти по адресу dest байтовым значением ch.
+
+// memcmp(const void* lhs, const void* rhs, size_t count)
+if(memcmp(key1, key2, 16) == 0) {...} // Сравнивает первые count байт двух блоков памяти. Возвращает как strcmp.
+
+==========================================================================================================
+
+#include <string>
+// .length() / .size()
+std::string s = "Hi"; int len = s.size(); // Возвращает количество символов. O(1).
+
+// .append(str) / +=
+s.append(" there"); s += "!"; // Добавляет строку.
+
+// .c_str()
+printf("%s", s.c_str()); // Возвращает const char* для совместимости с C-функциями.
+
+// .find(str) / .find(ch)
+if(s.find("abc") != std::string::npos) {...} // Ищет подстроку или символ. Возвращает позицию (size_t) или std::string::npos.
+
+// .substr(pos, count)
+std::string sub = s.substr(0, 5); // Возвращает подстроку.
+
+// .compare(str) / ==, <, >
+if(s == "exit") {...} // Сравнение строк.
+
+// std::getline(std::cin, str)
+std::getline(std::cin, name); // Безопасное чтение строки с пробелами.
+
+==========================================================================================================
+
+#include <vector>
+#include <array>
+
+// .push_back(value)
+vec.push_back(4); // Добавляет элемент в конец.
+
+// .pop_back()
+vec.pop_back(); // Удаляет последний элемент.
+
+// .size()
+for(size_t i=0; i<vec.size(); ++i) // Текущее количество элементов.
+
+// .data()
+int* p = vec.data(); // Возвращает указатель на сырой массив (T*).
+
+// [] / .at(i)
+vec[0] = 5; / vec.at(99); // Доступ к элементу. at(i) проверяет границы и бросает исключение.
+
+==========================================================================================================
+
+#include <algorithm>
+
+// std::sort(begin, end)
+std::sort(vec.begin(), vec.end()); // Сортирует диапазон по возрастанию.
+
+// std::find(begin, end, value)
+auto it = std::find(vec.begin(), vec.end(), 42); // Ищет значение. Возвращает итератор.
+
+// std::copy(src_begin, src_end, dest_begin)
+std::copy(arr, arr+5, vec.begin()); // Копирует диапазон.
+
+// std::fill(begin, end, value)
+std::fill(vec.begin(), vec.end(), 0); // Заполняет диапазон значением.
+
+// std::swap(a, b)
+std::swap(x, y); // Обменивает значения.
