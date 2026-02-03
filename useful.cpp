@@ -3,6 +3,32 @@
 #include <algorithm>
 #include <cstdint>
 
+
+template <typename T>
+struct S {
+    T* arr1 = new T[n];
+    // 1. Выделяет память (sizeof(T) * n байт)
+    // 2. Вызывает конструктор по умолчанию для каждого из n объектов
+    T* arr2 = static_cast<T*>(operator new[](n * sizeof(T)));
+    // Только выделяет сырую память, НЕ создает объекты
+
+    delete[] arr1; 
+    // 1. Вызывает деструктор для каждого объекта
+    // 2. Освобождает память
+    operator delete[](arr2);
+    // Только освобождает память, НЕ вызывает деструкторы
+
+    // Placement new:
+    new (arr + i) T(value);
+    //         ↑     ↑
+    //     где создать  что создать
+    
+    char buffer[sizeof(std::string)]; // выделяем сырую память
+    std::string* s = new (buffer) std::string("Hello");
+    // Создаем строку в buffer
+    s->~string(); // явно уничтожаем
+};
+
 int main() { 
     // ----------------------перевод тивов static_cast <data_type>
     int a = 6;
@@ -29,4 +55,5 @@ int main() {
     int a1 = 0242; // переменная в 8й системе счисления
     int a2 = 0x2A3; // переменная в 16й системе счисления
     int a3 = 0b10; // переменная в 2й системе счисления
+
 }
