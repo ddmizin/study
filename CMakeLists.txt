@@ -29,4 +29,5 @@ add_executable(${PROJECT_NAME}
         vector_string.cpp
         while_for_if_switch.cpp
         classes.cpp
+        vector.cpp
 )
