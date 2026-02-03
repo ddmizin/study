@@ -17,7 +17,7 @@ public:
 
     explicit Vector(size_t n): Vector(n, n) {
         if (n > 0) {
-            std::memset(arr, 0, n * sizeof(T));
+            std::memset();
         }
     }
 
