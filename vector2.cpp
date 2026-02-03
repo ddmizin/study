@@ -1,7 +1,8 @@
 #include <iostream>
+#include <cstring>
 #include <stdexcept>
 #include <algorithm>
-#include <cstring>
+#include <initializer_list>
 
 template <typename T>
 class Vector {
@@ -11,7 +12,7 @@ class Vector {
 
     Vector(size_t sz, size_t cap): arr(new T[cap]), sz(sz), cap(cap) {}
 
-    void check_index(size_t index) const {
+    void check_index(size_t index) {
         if (index >= sz) {
             throw std::out_of_range("Vector::at - index out of range!");
         }
@@ -23,37 +24,33 @@ class Vector {
         }
 
         T* new_arr = new T[new_cap];
-        
+
         if (sz > 0) {
             std::memcpy(new_arr, arr, sz * sizeof(T));
         }
-        
+    
         delete[] arr;
         arr = new_arr;
-        cap = new_cap;
+        cap = new_cap; 
     }
 
 public:
     Vector(): arr(nullptr), sz(0), cap(0) {}
 
-    explicit Vector(size_t n): Vector(n, n) {
-        if (n > 0) {
-            std::memset(arr, 0, n * sizeof(T));
-        }
-    }
-
-    Vector(size_t n, const T& value): Vector(n, n) {
+    Vector(size_t n): Vector(n, n) {
         std::memset(arr, T(), n * sizeof(T));
     }
 
-    Vector(const Vector& other): Vector(other.sz, other.cap) {
-        if (other.sz > 0) {
-            std::memcpy(arr, other.arr, other.sz * sizeof(T));
-        }
+    Vector(size_t n, const T& value): Vector(n, n) {
+        std::memset(arr, value, n * sizeof(T));
     }
 
     Vector(std::initializer_list<T> list): Vector(list.size(), list.size()) {
         std::copy(list.begin(), list.end(), arr);
+    }
+
+    Vector(const Vector& other): Vector(other.sz, other.cap) {
+        std::memcpy(arr, other.arr, other.sz * sizeof(T));
     }
 
     Vector(Vector&& other) noexcept : arr(other.arr), sz(other.sz), cap(other.cap) {
@@ -66,39 +63,39 @@ public:
         delete[] arr;
     }
 
-    Vector& operator=(Vector other) {
+    Vector& operator=(const Vector other) {
         swap(other);
         return *this;
     }
 
-    void swap(Vector& other) noexcept {
+    void swap(Vector other) noexcept {
         std::swap(arr, other.arr);
         std::swap(sz, other.sz);
         std::swap(cap, other.cap);
     }
 
-    friend void swap(Vector& v1, Vector& v2) noexcept {
+    friend void swap(Vector& v1, Vector& v2) {
         v1.swap(v2);
     }
 
-    size_t size() const noexcept { 
-        return sz; 
+    size_t size() const noexcept {
+        return sz;
     }
 
-    size_t capacity() const noexcept { 
-        return cap; 
+    size_t capacity() const noexcept {
+        return cap;
     }
 
-    bool empty() const noexcept { 
-        return sz == 0; 
+    bool empty() const noexcept {
+        return sz == 0;
     }
 
-    T& operator[](size_t index) { 
-        return arr[index]; 
+    T& operator[](size_t index) {
+        return arr[index];
     }
 
-    const T& operator[](size_t index) const { 
-        return arr[index]; 
+    const T& operator[](size_t index) const {
+        return arr[index];
     }
 
     T& at(size_t index) {
@@ -127,7 +124,7 @@ public:
     void pop_back() {
         if (sz > 0) {
             --sz;
-        }        
+        }
     }
 
     void clear() noexcept {
@@ -135,17 +132,17 @@ public:
     }
 
     void resize(size_t new_sz, const T& value = T()) {
-        if (new_sz > cap) {
+        if (new_sz > sz) {
             size_t new_cap = std::max(cap * 2, new_sz);
             reallocate(new_cap);
         }
-
+        
         if (new_sz > sz) {
             for (size_t i = sz; i < new_sz; ++i) {
                 arr[i] = value;
             }
         }
-        
+
         sz = new_sz;
     }
 
@@ -155,7 +152,7 @@ public:
                 delete[] arr;
                 arr = nullptr;
                 cap = 0;
-            } 
+            }
             else {
                 T* new_arr = new T[sz];
                 if (sz > 0) {
@@ -191,26 +188,29 @@ public:
 
     const T& back() const {
         if (empty()) {
-            throw std::out_of_range("Vector::back - vector is empty!");
+            throw std::out_of_range("Vector::back - vector is empty!")
         }
         return arr[sz - 1];
     }
 
-    T* begin() noexcept { 
-        return arr; 
+    T* begin() noexcept {
+        return arr;
     }
 
-    const T* begin() const noexcept { 
-        return arr; 
+    const T* begin() const noexcept {
+        return arr;
     }
 
-    T* end() noexcept { 
-        return arr + sz; 
+    T* end() noexcept {
+        return arr + sz;
     }
 
-    const T* end() const noexcept { 
-        return arr + sz; 
+    const T* end() const noexcept {
+        return arr + sz;
     }
+    
 };
+
+
 
 int main() {}
