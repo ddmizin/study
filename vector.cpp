@@ -10,9 +10,8 @@ class Vector {
     size_t sz;
     size_t cap;
 
-    // Приватный конструктор для внутреннего использования
     Vector(size_t sz, size_t cap): arr(cap > 0 ? static_cast<T*>(operator new[](cap * sizeof(T))) : nullptr), sz(sz), cap(cap) {
-        for (size_t i = 0; i < sz; ++i) { // Явно создаем объекты в уже выделенной памяти
+        for (size_t i = 0; i < sz; ++i) {
             new (arr + i) T();
         }
     }
@@ -23,22 +22,19 @@ class Vector {
         }
     }
 
-    // Безопасное копирование с использованием placement new
     void safe_copy(T* dest, const T* src, size_t count) {
         for (size_t i = 0; i < count; ++i) {
             new (dest + i) T(src[i]);
         }
     }
 
-    // Безопасное перемещение с использованием placement new
     void safe_move(T* dest, T* src, size_t count) {
         for (size_t i = 0; i < count; ++i) {
             new (dest + i) T(std::move(src[i]));
-            src[i].~T(); // Уничтожаем старый объект
+            src[i].~T();
         }
     }
 
-    // Деструктор для диапазона объектов
     void destroy_range(T* start, T* end) {
         for (T* ptr = start; ptr != end; ++ptr) {
             ptr->~T();
@@ -50,23 +46,19 @@ class Vector {
             return;
         }
 
-        // Выделяем сырую память
         T* new_arr = static_cast<T*>(operator new[](new_cap * sizeof(T)));
         
         try {
-            // Переносим существующие элементы
             for (size_t i = 0; i < sz; ++i) {
                 new (new_arr + i) T(std::move(arr[i]));
-                arr[i].~T(); // Уничтожаем старый объект
+                arr[i].~T();
             }
         } catch (...) {
-            // Если произошла ошибка, уничтожаем созданные объекты и освобождаем память
             destroy_range(new_arr, new_arr + sz);
             operator delete[](new_arr);
             throw;
         }
 
-        // Освобождаем старую память (объекты уже уничтожены)
         operator delete[](arr);
         arr = new_arr;
         cap = new_cap;
@@ -76,7 +68,6 @@ public:
     Vector(): arr(nullptr), sz(0), cap(0) {}
 
     explicit Vector(size_t n): Vector(n, n) {
-        // Объекты уже созданы в приватном конструкторе
     }
 
     Vector(size_t n, const T& value): Vector(0, n) {
@@ -91,7 +82,6 @@ public:
             safe_copy(arr, other.arr, other.sz);
             sz = other.sz;
         } catch (...) {
-            // Если произошла ошибка, уничтожаем созданные объекты
             destroy_range(arr, arr + sz);
             operator delete[](arr);
             throw;
@@ -119,9 +109,7 @@ public:
     }
 
     ~Vector() noexcept {
-        // Уничтожаем все объекты
         destroy_range(arr, arr + sz);
-        // Освобождаем память
         operator delete[](arr);
     }
 
@@ -135,7 +123,6 @@ public:
 
     Vector& operator=(Vector&& other) noexcept {
         if (this != &other) {
-            // Уничтожаем текущие объекты
             destroy_range(arr, arr + sz);
             operator delete[](arr);
             
@@ -325,43 +312,4 @@ public:
     }
 };
 
-// Тестовый пример
-int main() {
-    // Тест с std::string
-    Vector<std::string> vec1;
-    vec1.push_back("Hello");
-    vec1.push_back("World");
-    vec1.push_back("Test");
-    
-    std::cout << "vec1: ";
-    for (const auto& s : vec1) {
-        std::cout << s << " ";
-    }
-    std::cout << "\nSize: " << vec1.size() << ", Capacity: " << vec1.capacity() << "\n";
-    
-    // Тест с вложенными векторами
-    Vector<Vector<int>> vec2;
-    vec2.push_back({1, 2, 3});
-    vec2.push_back({4, 5, 6});
-    
-    std::cout << "\nvec2:\n";
-    for (const auto& inner : vec2) {
-        for (int val : inner) {
-            std::cout << val << " ";
-        }
-        std::cout << "\n";
-    }
-    
-    // Тест resize
-    Vector<std::string> vec3(3, "default");
-    vec3.resize(5, "resized");
-    vec3.resize(2);
-    
-    std::cout << "\nvec3: ";
-    for (const auto& s : vec3) {
-        std::cout << s << " ";
-    }
-    std::cout << "\n";
-    
-    return 0;
-}
+int main() {}
