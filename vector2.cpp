@@ -17,11 +17,17 @@ public:
 
     explicit Vector(size_t n): Vector(n, n) {
         if (n > 0) {
-            std::memset();
+            std::memset(arr, 0, n * sizeof(T));
         }
     }
 
-
+    Vector(size_t n, const T& value): Vector(n, n) {
+        for (size_t i; i < n; ++i) {
+            arr[i] = value;
+        }
+    }
+    
+    
 
 };
 
