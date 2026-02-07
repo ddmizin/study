@@ -287,14 +287,6 @@ public:
         return arr[sz - 1];
     }
 
-    T* data() noexcept { 
-        return arr; 
-    }
-
-    const T* data() const noexcept { 
-        return arr; 
-    }
-
     T* begin() noexcept { 
         return arr; 
     }
