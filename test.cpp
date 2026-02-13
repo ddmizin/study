@@ -1,21 +1,21 @@
 #include <iostream>
 
+template<class B>
 struct Base {
-    virtual void f(int x) {
-        std::cout << 1 << '\n';
+    void f(){
+        static_cast<B*>(this)->f();
     }
 };
 
-struct Derived: Base {
-    void f(int x) override{
-        std::cout << 2 << '\n';
+struct Derived: Base<Derived> {
+    void f(){
+        std::cout << 1;
     }
 };
 
 int main() {
-    int x;
     Derived d;
-    Base* b = &d;
-    d.f(x);
-    b->f(x);
+    Base<Derived>* b = &d;
+    b->f();
+
 }

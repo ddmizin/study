@@ -32,5 +32,9 @@ void f(int x) {
 }
  
 int main() {
-    f(5);
+    try {
+        f(0);
+    } catch(...){
+        std::cout << 111;
+    }
 }
