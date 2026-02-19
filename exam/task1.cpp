@@ -1,4 +1,4 @@
-// Реализуйе  фукнцию toOneArg с слудующим поведением. std запрещен
+// Реализуйе  фукнцию toOneArg со следующим поведением. std запрещен
 #include <assert.h>
 #include <iostream>
 
