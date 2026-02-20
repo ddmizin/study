@@ -106,7 +106,6 @@ public:
             cap = 0;
             return *this;
         }
-        
         size_t new_sz = sz * value;
         int* new_data = new int[new_sz];
         
