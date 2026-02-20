@@ -6,13 +6,13 @@
 
 template <typename T>
 class Vector {
-    T* arr;
+    T* data;
     size_t sz;
     size_t cap;
 
-    Vector(size_t sz, size_t cap): arr(cap > 0 ? static_cast<T*>(operator new[](cap * sizeof(T))) : nullptr), sz(sz), cap(cap) {
+    Vector(size_t sz, size_t cap): data(cap > 0 ? static_cast<T*>(operator new[](cap * sizeof(T))) : nullptr), sz(sz), cap(cap) {
         for (size_t i = 0; i < sz; ++i) {
-            new (arr + i) T();
+            new (data + i) T();
         }
     }
 
@@ -50,8 +50,8 @@ class Vector {
         
         try {
             for (size_t i = 0; i < sz; ++i) {
-                new (new_arr + i) T(std::move(arr[i]));
-                arr[i].~T();
+                new (new_arr + i) T(std::move(data[i]));
+                data[i].~T();
             }
         } catch (...) {
             destroy_range(new_arr, new_arr + sz);
@@ -59,31 +59,31 @@ class Vector {
             throw;
         }
 
-        operator delete[](arr);
-        arr = new_arr;
+        operator delete[](data);
+        data = new_arr;
         cap = new_cap;
     }
 
 public:
-    Vector(): arr(nullptr), sz(0), cap(0) {}
+    Vector(): data(nullptr), sz(0), cap(0) {}
 
     explicit Vector(size_t n): Vector(n, n) {
     }
 
     Vector(size_t n, const T& value): Vector(0, n) {
         for (size_t i = 0; i < n; ++i) {
-            new (arr + i) T(value);
+            new (data + i) T(value);
         }
         sz = n;
     }
 
     Vector(const Vector& other): Vector(0, other.cap) {
         try {
-            safe_copy(arr, other.arr, other.sz);
+            safe_copy(data, other.data, other.sz);
             sz = other.sz;
         } catch (...) {
-            destroy_range(arr, arr + sz);
-            operator delete[](arr);
+            destroy_range(data, data + sz);
+            operator delete[](data);
             throw;
         }
     }
@@ -92,25 +92,25 @@ public:
         try {
             const T* src = list.begin();
             for (size_t i = 0; i < list.size(); ++i) {
-                new (arr + i) T(src[i]);
+                new (data + i) T(src[i]);
             }
             sz = list.size();
         } catch (...) {
-            destroy_range(arr, arr + sz);
-            operator delete[](arr);
+            destroy_range(data, data + sz);
+            operator delete[](data);
             throw;
         }
     }
 
-    Vector(Vector&& other) noexcept : arr(other.arr), sz(other.sz), cap(other.cap) {
-        other.arr = nullptr;
+    Vector(Vector&& other) noexcept : data(other.data), sz(other.sz), cap(other.cap) {
+        other.data = nullptr;
         other.sz = 0;
         other.cap = 0;
     }
 
     ~Vector() noexcept {
-        destroy_range(arr, arr + sz);
-        operator delete[](arr);
+        destroy_range(data, data + sz);
+        operator delete[](data);
     }
 
     Vector& operator=(const Vector& other) {
@@ -123,14 +123,14 @@ public:
 
     Vector& operator=(Vector&& other) noexcept {
         if (this != &other) {
-            destroy_range(arr, arr + sz);
-            operator delete[](arr);
+            destroy_range(data, data + sz);
+            operator delete[](data);
             
-            arr = other.arr;
+            data = other.data;
             sz = other.sz;
             cap = other.cap;
             
-            other.arr = nullptr;
+            other.data = nullptr;
             other.sz = 0;
             other.cap = 0;
         }
@@ -138,7 +138,7 @@ public:
     }
 
     void swap(Vector& other) noexcept {
-        std::swap(arr, other.arr);
+        std::swap(data, other.data);
         std::swap(sz, other.sz);
         std::swap(cap, other.cap);
     }
@@ -160,21 +160,21 @@ public:
     }
 
     T& operator[](size_t index) { 
-        return arr[index]; 
+        return data[index]; 
     }
 
     const T& operator[](size_t index) const { 
-        return arr[index]; 
+        return data[index]; 
     }
 
     T& at(size_t index) {
         check_index(index);
-        return arr[index];
+        return data[index];
     }
 
     const T& at(size_t index) const {
         check_index(index);
-        return arr[index];
+        return data[index];
     }
 
     void reserve(size_t new_cap) {
@@ -188,7 +188,7 @@ public:
             size_t new_cap = (cap == 0) ? 1 : cap * 2;
             reallocate(new_cap);
         }
-        new (arr + sz) T(value);
+        new (data + sz) T(value);
         ++sz;
     }
 
@@ -197,19 +197,19 @@ public:
             size_t new_cap = (cap == 0) ? 1 : cap * 2;
             reallocate(new_cap);
         }
-        new (arr + sz) T(std::move(value));
+        new (data + sz) T(std::move(value));
         ++sz;
     }
 
     void pop_back() {
         if (sz > 0) {
             --sz;
-            arr[sz].~T();
+            data[sz].~T();
         }        
     }
 
     void clear() noexcept {
-        destroy_range(arr, arr + sz);
+        destroy_range(data, data + sz);
         sz = 0;
     }
 
@@ -221,11 +221,11 @@ public:
             }
             
             for (size_t i = sz; i < new_sz; ++i) {
-                new (arr + i) T(value);
+                new (data + i) T(value);
             }
         } 
         else if (new_sz < sz) {
-            destroy_range(arr + new_sz, arr + sz);
+            destroy_range(data + new_sz, data + sz);
         }
         
         sz = new_sz;
@@ -234,17 +234,17 @@ public:
     void shrink_to_fit() {
         if (sz < cap) {
             if (sz == 0) {
-                destroy_range(arr, arr + sz);
-                operator delete[](arr);
-                arr = nullptr;
+                destroy_range(data, data + sz);
+                operator delete[](data);
+                data = nullptr;
                 cap = 0;
             } 
             else {
                 T* new_arr = static_cast<T*>(operator new[](sz * sizeof(T)));
                 try {
                     for (size_t i = 0; i < sz; ++i) {
-                        new (new_arr + i) T(std::move(arr[i]));
-                        arr[i].~T();
+                        new (new_arr + i) T(std::move(data[i]));
+                        data[i].~T();
                     }
                 } catch (...) {
                     destroy_range(new_arr, new_arr + sz);
@@ -252,8 +252,8 @@ public:
                     throw;
                 }
                 
-                operator delete[](arr);
-                arr = new_arr;
+                operator delete[](data);
+                data = new_arr;
                 cap = sz;
             }
         }
@@ -263,44 +263,44 @@ public:
         if (empty()) {
             throw std::out_of_range("Vector::front - vector is empty!");
         }
-        return arr[0];
+        return data[0];
     }
 
     const T& front() const {
         if (empty()) {
             throw std::out_of_range("Vector::front - vector is empty!");
         }
-        return arr[0];
+        return data[0];
     }
 
     T& back() {
         if (empty()) {
             throw std::out_of_range("Vector::back - vector is empty!");
         }
-        return arr[sz - 1];
+        return data[sz - 1];
     }
 
     const T& back() const {
         if (empty()) {
             throw std::out_of_range("Vector::back - vector is empty!");
         }
-        return arr[sz - 1];
+        return data[sz - 1];
     }
 
     T* begin() noexcept { 
-        return arr; 
+        return data; 
     }
 
     const T* begin() const noexcept { 
-        return arr; 
+        return data; 
     }
 
     T* end() noexcept { 
-        return arr + sz; 
+        return data + sz; 
     }
 
     const T* end() const noexcept { 
-        return arr + sz; 
+        return data + sz; 
     }
 };
 
