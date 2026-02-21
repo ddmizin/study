@@ -1,6 +1,7 @@
-// Следующий код должен компилироваться и работать без ошибок. std запрещен
-#include <assert.h>
 #include <iostream>
+#include <assert.h>
+
+// Следующий код должен компилироваться и работать без ошибок. std запрещен
 
 class Array {
     size_t sz;
@@ -11,14 +12,25 @@ public:
 
     Array(const Array& other): sz(0), cap(0), data(nullptr) {
         if (other.sz > 0) {
-            sz = other.sz;
-            cap = sz;
+            cap = other.cap;
             data = new int[cap];
-
-            for (size_t i = 0; i < sz; ++i) {
+            for (size_t i = 0; i < other.sz; ++i) {
                 data[i] = other.data[i];
             }
+            sz = other.sz;
         }
+    }
+
+    int operator[](size_t index) {
+        return data[index];
+    }
+
+    const int operator[](size_t index) const {
+        return data[index];
+    }
+
+    ~Array() {
+        delete[] data;
     }
 
     Array& operator=(const Array& other) {
@@ -27,7 +39,6 @@ public:
             cap = sz;
             delete[] data;
             data = new int[cap];
-
             for (size_t i = 0; i < sz; ++i) {
                 data[i] = other.data[i];
             }
@@ -35,15 +46,10 @@ public:
         return *this;
     }
 
-    ~Array() {
-        delete[] data;
-    }
-
     void push_back(int value) {
         if (sz == cap) {
             size_t new_cap = (cap == 0) ? 1 : cap * 2;
             int* new_data = new int[new_cap];
-
             for (size_t i = 0; i < sz; ++i) {
                 new_data[i] = data[i];
             }
@@ -61,11 +67,10 @@ public:
         if (sz == cap) {
             size_t new_cap = (cap == 0) ? 1 : cap * 2;
             int* new_data = new int[new_cap];
-            new_data[0] = value;
-
             for (size_t i = 0; i < sz; ++i) {
                 new_data[i + 1] = data[i];
             }
+            new_data[0] = value;
             delete[] data;
             cap = new_cap;
             data = new_data;
@@ -79,45 +84,37 @@ public:
     }
 
     Array operator+(int value) const {
-        Array b = *this;
-        b.push_back(value);
-        return b;
+        Array result = *this;
+        result.push_back(value);
+        return result;
     }
 
     friend Array operator+(int value, const Array& other) {
-        Array b = other;
-        b.push_forward(value);
-        return b;
+        Array result = other;
+        result.push_forward(value);
+        return result;
     }
 
-    int& operator[](size_t index) {
-        return data[index];
-    }
-
-    const int& operator[](size_t index) const {
-        return data[index];
-    }
-
-    Array& operator*(int value) {
+    Array operator*(int value) {
         if (value == 0) {
-            delete[] data;
-            data = nullptr;
-            sz = 0;
-            cap = 0;
-            return *this;
+            Array b = *this;
+            delete[] b.data;
+            b.data = nullptr;
+            b.sz = 0;
+            b.cap = 0;
+            return b;
         }
-        size_t new_sz = sz * value;
+        Array b = *this;
+        size_t new_sz = b.sz * value;
         int* new_data = new int[new_sz];
-        
         for (size_t i = 0; i < new_sz; ++i) {
-            new_data[i] = data[i % sz];
+            new_data[i] = b.data[i % sz];
         }
-        
-        delete[] data;
-        data = new_data;
-        sz = new_sz;
-        cap = new_sz;
-        return *this;
+        b.sz = new_sz;
+        b.cap = b.sz;
+        delete[] b.data;
+        b.data = new_data;
+        return b;
     }
 
     friend Array operator*(int value, Array& other) {
@@ -125,32 +122,28 @@ public:
     }
 
     Array& operator-(int value) {
-        int new_sz = 0;
-
+        size_t new_sz = 0;
         for (size_t i = 0; i < sz; ++i) {
             if (data[i] != value) {
                 ++new_sz;
             }
         }
-        int new_cap = new_sz;
+
         size_t temp = 0;
+        size_t new_cap = new_sz;
         int* new_data = new int[new_cap];
-        
         for (size_t i = 0; i < sz; ++i) {
             if (data[i] != value) {
-                new_data[temp] = data[i];
-                ++temp;
+                new_data[temp++] = data[i];
             }
         }
         delete[] data;
-        cap = new_cap;
-        sz = new_sz;
         data = new_data;
+        sz = new_sz;;
+        cap = new_cap;
         return *this;
     }
-    
 };
-
 
 int main() {
     Array a;

@@ -1,192 +1,179 @@
 #include <iostream>
+#include <assert.h>
 
-template <typename T>
-class Vector {
+// Следующий код должен компилироваться и работать без ошибок. std запрещен
+
+class Array {
     size_t sz;
     size_t cap;
-    T* data;
-
-    void safe_copy(T* dst, const T* src, size_t count) {
-        for (size_t i = 0; i < count; ++i) {
-            new (dst + i) T(src[i]);
-        }
-    }
-
-    void safe_move(T* dst, const T* src, size_t count) {
-        for (size_t i = 0; i < count; ++i) {
-            new (dst + i) T(std::move(src[i]));
-        }
-    }
-
-    void destroy_range(T* start, T* end) {
-        for (T* ptr = start; ptr != end; ++ptr) {
-            ptr->~T();
-        }
-    }
-
-    void check_index(size_t index) {
-        if (index >= sz) {
-            throw std::out_of_range("Vector::at - index out of range!");
-        }
-    }
-
-    void reallocate(size_t new_cap) {
-        if (new_cap <= cap) {
-            return;
-        }
-        T* new_data = static_cast<T*>(operator new[](new_cap * sizeof(T)));
-        
-        try {
-            for (size_t i = 0; i < sz; ++i) {
-                new (new_data + i) T(std::move(data[i]));
-                data[i].~T();
-            }
-        } catch (...) {
-            destroy_range(new_data, new_data + sz);
-            operator delete[](new_data);
-            throw;
-        }
-        operator delete[](data);
-        data = new_data;
-        cap = new_cap;
-    }
-
+    int* data;
 public:
-    Vector(): sz(0); cap(0); data(nullptr) {}
+    Array(): sz(0), cap(0), data(nullptr) {}
 
-    Vector(size_t n): sz(n), cap(n), data(static_cast<T*>(operator new[](n * sizeof(T)))) {
-        for (size_t i = 0; i < n; ++i) {
-            new (data + i) T();
-        }
-    }
-
-    Vector(size_t n, const T& value): sz(n), cap(n), data(static_cast<T*>(operator new[](n * sizeof(T)))) {
-        for (size_t i = 0; i < n; ++i) {
-            new (data + i) T(value);
-        }
-    }
-
-    Vector(const Vector& other): sz(other.sz), cap(other.cap), data(static_cast<T*>(operator new[](other.cap * sizeof(T)))) {
-        try {
-            safe_copy(data, other.data, other.sz);
-        } catch (...) {
-            destroy_range(data, data + sz);
-            operator delete[](data);
-            throw;
-        }
-    }
-
-    Vector(std::initializer_list<T> list): sz(list.size()), cap(list.size()), data(static_cast<T*>(operator new[](list.size() * sizeof(T)))) {
-        try {
-            const T* src = list.begin();
-            for (size_t i = 0; i < list.size(); ++i) {
-                new (data + i) T(src[i]);
+    Array(const Array& other): sz(0), cap(0), data(nullptr) {
+        if (other.sz > 0) {
+            cap = other.cap;
+            data = new int[cap];
+            for (size_t i = 0; i < other.sz; ++i) {
+                data[i] = other.data[i];
             }
-        } catch (...) {
-            destroy_range(data, data + sz);
-            operator delete[](data);
-            throw;
+            sz = other.sz;
         }
     }
 
-    ~Vector() noexcept {
-        destroy_range(data, data + sz);
-        operator delete[](data);
+    int operator[](size_t index) {
+        return data[index];
     }
 
-    void swap(Vector& other) {
-        std::swap(data, other.data);
-        std::swap(sz, other.sz);
-        std::swap(cap, other.cap);
+    const int operator[](size_t index) const {
+        return data[index];
     }
 
-    Vector& operator=(const Vector& other) {
+    ~Array() {
+        delete[] data;
+    }
+
+    Array& operator=(const Array& other) {
         if (this != &other) {
-            Vector temp(other);
-            swap(temp);
+            sz = other.sz;
+            cap = sz;
+            delete[] data;
+            data = new int[cap];
+            for (size_t i = 0; i < sz; ++i) {
+                data[i] = other.data[i];
+            }
         }
         return *this;
     }
 
-    friend void swap(Vector& a, Vector& b) {
-        a.swap(b);
-    }
-
-    size_t size() {
-        return sz;
-    }
-
-    size_t capacity() {
-        return cap;
-    }
-
-    bool empty() {
-        return sz == 0;
-    }
-
-    T& operator[](size_t index) {
-        return data[index];
-    }
-
-    const T& operator[](size_t index) const {
-        return data[index];
-    }
-
-    T& at(size_t index) {
-        check_index(index);
-        return data[index];
-    }
-
-    const T& at(size_t index) const {
-        check_index(index);
-        return data[index];
-    }
-
-    void reserve(size_t new_cap) {
-        if (new_cap > cap) {
-            reallocate(new_cap);
-        }
-    }
-
-    void push_back(const T& value) {
+    void push_back(int value) {
         if (sz == cap) {
             size_t new_cap = (cap == 0) ? 1 : cap * 2;
-            reallocate(new_cap);
+            int* new_data = new int[new_cap];
+            for (size_t i = 0; i < sz; ++i) {
+                new_data[i] = data[i];
+            }
+            new_data[sz] = value;
+            delete[] data;
+            cap = new_cap;
+            data = new_data;
+        } else {
+            data[sz] = value;
         }
-        new (data + sz) T(value);
         ++sz;
     }
 
-    void pop_back() {
-        if (sz > 0) {
-            --sz;
-            data[sz].~T();
-        }
-    }
-
-    void clear() {
-        destroy_range(data, data + sz);
-        sz = 0;
-    }
-
-    void resize(size_t new_sz, const T& value = T()) {
-        if (new_sz > sz) {
-            if (new_sz > cap) {
-                size_t new_cap = std::max(new_sz, cap * 2);
-                reallocate(new_cap);
+    void push_forward(int value) {
+        if (sz == cap) {
+            size_t new_cap = (cap == 0) ? 1 : cap * 2;
+            int* new_data = new int[new_cap];
+            for (size_t i = 0; i < sz; ++i) {
+                new_data[i + 1] = data[i];
             }
-            for (size_t i = sz; i < new_sz; ++i) {
-                new (data + i) T(value);
+            new_data[0] = value;
+            delete[] data;
+            cap = new_cap;
+            data = new_data;
+        } else {
+            for (size_t i = sz; i > 0; --i) {
+                data[i] = data[i - 1];
             }
-        } else if (new_sz < sz) {
-            destroy_range(data + new_sz, data + sz);
+            data[0] = value;
         }
-        sz = new_sz;
+        ++sz;
     }
 
-    
+    Array operator+(int value) const {
+        Array result = *this;
+        result.push_back(value);
+        return result;
+    }
+
+    friend Array operator+(int value, const Array& other) {
+        Array result = other;
+        result.push_forward(value);
+        return result;
+    }
+
+    Array operator*(int value) {
+        if (value == 0) {
+            Array b = *this;
+            delete[] b.data;
+            b.data = nullptr;
+            b.sz = 0;
+            b.cap = 0;
+            return b;
+        }
+        Array b = *this;
+        size_t new_sz = b.sz * value;
+        int* new_data = new int[new_sz];
+        for (size_t i = 0; i < new_sz; ++i) {
+            new_data[i] = b.data[i % sz];
+        }
+        b.sz = new_sz;
+        b.cap = b.sz;
+        delete[] b.data;
+        b.data = new_data;
+        return b;
+    }
+
+    friend Array operator*(int value, Array& other) {
+        return other * value;
+    }
+
+    Array& operator-(int value) {
+        size_t new_sz = 0;
+        for (size_t i = 0; i < sz; ++i) {
+            if (data[i] != value) {
+                ++new_sz;
+            }
+        }
+
+        size_t temp = 0;
+        size_t new_cap = new_sz;
+        int* new_data = new int[new_cap];
+        for (size_t i = 0; i < sz; ++i) {
+            if (data[i] != value) {
+                new_data[temp++] = data[i];
+            }
+        }
+        delete[] data;
+        data = new_data;
+        sz = new_sz;;
+        cap = new_cap;
+        return *this;
+    }
 };
 
 int main() {
-    return 0;
+    Array a;
+
+    a = a + 1;
+    a = a + 2;
+
+    assert(a[0] == 1);
+    assert(a[1] == 2);
+
+    a = 0 + a;
+
+    assert(a[0] == 0);
+    assert(a[1] == 1);
+    assert(a[2] == 2);
+
+    a = 2 * a;
+
+    assert(a[0] == 0);
+    assert(a[1] == 1);
+    assert(a[2] == 2);
+    assert(a[3] == 0);
+    assert(a[4] == 1);
+    assert(a[5] == 2);
+
+    a = a - 1;
+
+    assert(a[0] == 0);
+    assert(a[1] == 2);
+    assert(a[2] == 0);
+    assert(a[3] == 2);
+    std::cout << "All tests complited";
 }
