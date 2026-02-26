@@ -3,40 +3,42 @@
 
 std::vector<std::vector<int>> graph;
 std::vector<bool> visited;
-bool hasCycle = false;
 
-void dfs(int v, int parent) {
+void dfs(int v) {
     visited[v] = true;
-
     for (int to : graph[v]) {
-        if (!visited[to]) {
-            dfs(to, v);
-        }
-        else if (to != parent) {
-            hasCycle = true;
-        }
+        if (!visited[to])
+            dfs(to);
     }
 }
 
 int main() {
-    int N, M;
-    std::cin >> N >> M;
+    int n, m;
+    std::cin >> n >> m;
 
-    graph.resize(N + 1);
-    visited.assign(N + 1, false);
+    if (n < 3 || m != n) {
+        std::cout << "EUCLID\n";
+        return 0;
+    }
 
-    for (int i = 0; i < M; i++) {
+    graph.assign(n + 1, {});
+    visited.assign(n + 1, false);
+
+    for (int i = 0; i < m; i++) {
         int u, v;
         std::cin >> u >> v;
         graph[u].push_back(v);
         graph[v].push_back(u);
     }
 
-    for (int i = 1; i <= N && !hasCycle; i++) {
+    dfs(1);
+
+    for (int i = 1; i <= n; i++) {
         if (!visited[i]) {
-            dfs(i, -1);
+            std::cout << "EUCLID\n";
+            return 0;
         }
     }
 
-    std::cout << (hasCycle ? "YES\n" : "NO\n");
+    std::cout << "ARCHIMEDES\n";
 }
