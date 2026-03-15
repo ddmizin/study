@@ -155,6 +155,10 @@ public:
                 return;
             }
 
+        // Вывод количества вершин и ребер
+        cout << "|V| = " << vertices << endl;
+        cout << "|E| = " << allEdges.size() << endl;
+
         for(int i=0;i<vertices;i++){
 
             auto dist = shortestPaths(i);
@@ -261,9 +265,9 @@ public:
 
         for(auto &e : mst){
             cout<<"   "
-                <<countryName(e.a)
+                <<e.a
                 <<" - "
-                <<countryName(e.b)
+                <<e.b
                 <<"  ("
                 <<e.w
                 <<")\n";
@@ -363,39 +367,40 @@ int main(){
 
     GraphEU g(22);
 
-    g.addBorder(0,1,500);
-    g.addBorder(1,2,1000);
-    g.addBorder(2,3,250);
-    g.addBorder(2,5,300);
-    g.addBorder(2,6,900);
-    g.addBorder(2,8,1100);
-    g.addBorder(3,4,150);
-    g.addBorder(3,5,200);
-    g.addBorder(3,6,650);
-    g.addBorder(4,6,550);
-    g.addBorder(5,6,600);
-    g.addBorder(6,18,350);
-    g.addBorder(6,17,500);
-    g.addBorder(6,16,300);
-    g.addBorder(6,7,500);
-    g.addBorder(7,15,55);
-    g.addBorder(7,11,215);
-    g.addBorder(7,9,250);
-    g.addBorder(7,8,750);
-    g.addBorder(8,9,500);
-    g.addBorder(9,10,100);
-    g.addBorder(9,11,400);
-    g.addBorder(10,11,300);
-    g.addBorder(11,12,650);
-    g.addBorder(11,15,150);
-    g.addBorder(12,13,300);
-    g.addBorder(13,14,500);
-    g.addBorder(15,16,300);
-    g.addBorder(15,17,550);
-    g.addBorder(16,17,500);
-    g.addBorder(17,19,400);
-    g.addBorder(19,20,250);
-    g.addBorder(20,21,300);
+    g.addBorder(0, 1, 500);
+    g.addBorder(1, 2, 1000);
+    g.addBorder(2, 3, 250);
+    g.addBorder(2, 5, 300);
+    g.addBorder(2, 6, 900);
+    g.addBorder(2, 8, 1100);
+    g.addBorder(3, 4, 150);
+    g.addBorder(3, 5, 200);
+    g.addBorder(3, 6, 650);
+    g.addBorder(4, 6, 550);
+    g.addBorder(5, 6, 600);
+    g.addBorder(6, 18, 350);
+    g.addBorder(6, 17, 500);
+    g.addBorder(6, 16, 300);
+    g.addBorder(6, 7, 500);
+    g.addBorder(7, 15, 55);
+    g.addBorder(7, 16, 250);
+    g.addBorder(7, 11, 215);
+    g.addBorder(7, 9, 250);
+    g.addBorder(7, 8, 750);
+    g.addBorder(8, 9, 500);
+    g.addBorder(9, 10, 100);
+    g.addBorder(9, 11, 400);
+    g.addBorder(10, 11, 300);
+    g.addBorder(11, 12, 650);
+    g.addBorder(11, 15, 150);
+    g.addBorder(12, 13, 300);
+    g.addBorder(13, 14, 500);
+    g.addBorder(15, 16, 300);
+    g.addBorder(15, 17, 550);
+    g.addBorder(16, 17, 500);
+    g.addBorder(17, 19, 400);
+    g.addBorder(19, 20, 250);
+    g.addBorder(20, 21, 300);
 
     cout<<"Graph analysis\n\n";
 
