@@ -1,44 +1,60 @@
 #include <iostream>
 #include <vector>
+#include <queue>
 
-std::vector<std::vector<int>> graph;
-std::vector<bool> visited;
-
-void dfs(int v) {
-    visited[v] = true;
-    for (int to : graph[v]) {
-        if (!visited[to])
-            dfs(to);
-    }
-}
+struct Edge {
+    int to;
+    int w;
+};
 
 int main() {
-    int n, m;
-    std::cin >> n >> m;
+    int N, M;
+    std::cin >> N >> M;
 
-    if (n < 3 || m != n) {
-        std::cout << "EUCLID\n";
-        return 0;
+    int S, F;
+    std::cin >> S >> F;
+
+    std::vector<std::vector<Edge>> g(N + 1);
+
+    for (int i = 0; i < M; i++) {
+        int b, e, w;
+        std::cin >> b >> e >> w;
+
+        g[b].push_back({e, w});
+        g[e].push_back({b, w});
     }
 
-    graph.assign(n + 1, {});
-    visited.assign(n + 1, false);
+    const int INF = 1000000000;
+    std::vector<int> dist(N + 1, INF);
 
-    for (int i = 0; i < m; i++) {
-        int u, v;
-        std::cin >> u >> v;
-        graph[u].push_back(v);
-        graph[v].push_back(u);
-    }
+    std::priority_queue<std::pair<int,int>, std::vector<std::pair<int,int>>, std::greater<std::pair<int,int>>> pq;
 
-    dfs(1);
+    dist[S] = 0;
+    pq.push({0, S});
 
-    for (int i = 1; i <= n; i++) {
-        if (!visited[i]) {
-            std::cout << "EUCLID\n";
-            return 0;
+    while (!pq.empty()) {
+
+        auto [d, v] = pq.top();
+        pq.pop();
+
+        if (d != dist[v]) continue;
+
+        if (v == F) break;
+
+        for (const Edge &e : g[v]) {
+
+            int to = e.to;
+            int nd = d + e.w;
+
+            if (nd < dist[to]) {
+                dist[to] = nd;
+                pq.push({nd, to});
+            }
         }
     }
 
-    std::cout << "ARCHIMEDES\n";
+    if (dist[F] == INF)
+        std::cout << -1;
+    else
+        std::cout << dist[F];
 }
