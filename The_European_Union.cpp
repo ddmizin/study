@@ -155,7 +155,6 @@ public:
                 return;
             }
 
-        // Вывод количества вершин и ребер
         cout << "|V| = " << vertices << endl;
         cout << "|E| = " << allEdges.size() << endl;
 
