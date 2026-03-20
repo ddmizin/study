@@ -1,60 +1,54 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <algorithm>
 
-struct Edge {
-    int to;
-    int w;
-};
 
 int main() {
-    int N, M;
-    std::cin >> N >> M;
+    long long h;
+    std::cin >> h;
 
-    int S, F;
-    std::cin >> S >> F;
+    int a, b, c;
+    std::cin >> a >> b >> c;
 
-    std::vector<std::vector<Edge>> g(N + 1);
+    int m = std::min({a, b, c});
 
-    for (int i = 0; i < M; i++) {
-        int b, e, w;
-        std::cin >> b >> e >> w;
+    std::vector<int> steps = {a, b, c};
 
-        g[b].push_back({e, w});
-        g[e].push_back({b, w});
-    }
+    const long long INF = 4e18;
+    std::vector<long long> dist(m, INF);
 
-    const int INF = 1000000000;
-    std::vector<int> dist(N + 1, INF);
+    int start = 1 % m;
+    dist[start] = 1;
 
-    std::priority_queue<std::pair<int,int>, std::vector<std::pair<int,int>>, std::greater<std::pair<int,int>>> pq;
+    std::priority_queue<std::pair<long long,int>, std::vector<std::pair<long long,int>>, std::greater<>> pq;
 
-    dist[S] = 0;
-    pq.push({0, S});
+    pq.push({1, start});
 
     while (!pq.empty()) {
-
-        auto [d, v] = pq.top();
+        auto [d, r] = pq.top();
         pq.pop();
 
-        if (d != dist[v]) continue;
+        if (d != dist[r]) continue;
 
-        if (v == F) break;
+        for (int step : steps) {
+            int nr = (r + step) % m;
+            long long nd = d + step;
 
-        for (const Edge &e : g[v]) {
-
-            int to = e.to;
-            int nd = d + e.w;
-
-            if (nd < dist[to]) {
-                dist[to] = nd;
-                pq.push({nd, to});
+            if (nd < dist[nr]) {
+                dist[nr] = nd;
+                pq.push({nd, nr});
             }
         }
     }
 
-    if (dist[F] == INF)
-        std::cout << -1;
-    else
-        std::cout << dist[F];
+    long long ans = 0;
+
+    for (int r = 0; r < m; r++) {
+        if (dist[r] <= h) {
+            ans += (h - dist[r]) / m + 1;
+        }
+    }
+
+    std::cout << ans;
 }
