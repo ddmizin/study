@@ -42,25 +42,6 @@ int main() {
         }
     }
 
-<<<<<<< HEAD
-    vector<int> result_edges;
-    for (int u = 1; u <= n; ++u) {
-        for (auto& edge : adj[u]) {
-            if (edge.id > 0 && edge.flow > 0) {
-                result_edges.push_back(edge.id);
-            }
-        }
-    }
-
-    cout << max_weight << "\n";
-    cout << result_edges.size() << "\n";
-    for (size_t i = 0; i < result_edges.size(); ++i) {
-        cout << result_edges[i] << (i + 1 == result_edges.size() ? "" : " ");
-    }
-    cout << "\n";
-
-    return 0;
-=======
     long long ans = 0;
 
     for (int r = 0; r < m; r++) {
@@ -70,5 +51,4 @@ int main() {
     }
 
     std::cout << ans;
->>>>>>> 4ec7263d1a782442da23d1e1ada514f79f0866f7
 }
