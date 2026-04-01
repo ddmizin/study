@@ -5,36 +5,33 @@
 
 using namespace std;
 
-const int INF = 1e9;
+const long long INF = 1e18;
 
 
 struct Edge {
     int to;
-    int cap;
-    int flow;
-    int cost;
+    long long cap;
+    long long flow;
+    long long cost;
     int rev;
     int id;
 };
 
 int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-
     int n, m, e;
     if (!(cin >> n >> m >> e)) return 0;
 
-    vector<int> w_L(n + 1);
+    vector<long long> w_L(n + 1);
     for (int i = 1; i <= n; ++i) cin >> w_L[i];
 
-    vector<int> w_R(m + 1);
+    vector<long long> w_R(m + 1);
     for (int i = 1; i <= m; ++i) cin >> w_R[i];
 
     int S = 0;
     int T = n + m + 1; 
     vector<vector<Edge>> adj(n + m + 2);
 
-    auto add_edge = [&](int u, int v, int cap, int cost, int id) {
+    auto add_edge = [&](int u, int v, long long cap, long long cost, int id) {
         adj[u].push_back({v, cap, 0, cost, (int)adj[v].size(), id});
         adj[v].push_back({u, 0, 0, -cost, (int)adj[u].size() - 1, 0});
     };
@@ -54,7 +51,7 @@ int main() {
     }
 
     
-    vector<int> pot(n + m + 2, INF);
+    vector<long long> pot(n + m + 2, INF);
     pot[S] = 0;
     
     
@@ -78,17 +75,14 @@ int main() {
 
     long long max_weight = 0;
 
-    vector<int> dist(n + m + 2);
-    vector<int> parent_node(n + m + 2);
-    vector<int> parent_edge(n + m + 2);
     
     while (true) {
-        dist.assign(n + m + 2, INF);
-        parent_node.assign(n + m + 2, -1);
-        parent_edge.assign(n + m + 2, -1);
+        vector<long long> dist(n + m + 2, INF);
+        vector<int> parent_node(n + m + 2, -1);
+        vector<int> parent_edge(n + m + 2, -1);
         
         
-        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
 
         dist[S] = 0;
         pq.push({0, S});
@@ -98,12 +92,11 @@ int main() {
             pq.pop();
 
             if (d > dist[u]) continue;
-            if (u == T) break;
 
             for (int i = 0; i < adj[u].size(); ++i) {
                 auto& edge = adj[u][i];
                 if (edge.cap - edge.flow > 0 && pot[u] != INF && pot[edge.to] != INF) {
-                    int new_cost = dist[u] + edge.cost + pot[u] - pot[edge.to];
+                    long long new_cost = dist[u] + edge.cost + pot[u] - pot[edge.to];
                     if (dist[edge.to] > new_cost) {
                         dist[edge.to] = new_cost;
                         parent_node[edge.to] = u;
@@ -118,7 +111,7 @@ int main() {
         
         if (dist[T] + pot[T] >= 0) break;
 
-        int true_cost = dist[T] + pot[T];
+        long long true_cost = dist[T] + pot[T];
         max_weight += -true_cost;
 
         int curr = T;
@@ -133,8 +126,8 @@ int main() {
         }
 
         for (int i = 0; i <= n + m + 1; ++i) {
-            if (pot[i] != INF) {
-                pot[i] += min(dist[i], dist[T]);
+            if (pot[i] != INF && dist[i] != INF) {
+                pot[i] += dist[i];
             }
         }
     }
@@ -155,5 +148,5 @@ int main() {
     }
     cout << "\n";
 
-    return 0;
+    return 0; 
 }
