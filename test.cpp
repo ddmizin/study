@@ -1,145 +1,159 @@
+#pragma GCC optimize("O3,unroll-loops")
 #include <iostream>
 #include <vector>
-#include <queue>
-#include <algorithm>
+#include <string>
 
 using namespace std;
 
-const long long INF = 2e18;
+inline uint64_t fnv1a(const string& s) {
+    uint64_t hash = 14695981039346656037ULL;
+    for (char c : s) {
+        hash ^= (uint64_t)(unsigned char)c;
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
 
-struct Edge {
-    int to;
-    long long cap;
-    long long flow;
-    int rev;
+struct Entry {
+    uint64_t key;
+    int count;
+    bool active;
 };
 
-vector<vector<Edge>> adj;
+class CuckooHashTable {
+private:
+    int M;
+    vector<Entry> T1, T2;
+    uint64_t seed1, seed2;
 
-void add_edge(int from, int to, long long cap) {
-    adj[from].push_back({to, cap, 0, (int)adj[to].size()});
-    adj[to].push_back({from, 0, 0, (int)adj[from].size() - 1});
-}
-
-
-long long edmonds_karp(int s, int t) {
-    long long flow = 0;
-    vector<int> parent_node(adj.size());
-    vector<int> parent_edge(adj.size());
-
-    while (true) {
-        fill(parent_node.begin(), parent_node.end(), -1);
-        parent_node[s] = -2;
-        queue<pair<int, long long>> q;
-        q.push({s, INF});
-
-        long long pushed = 0;
-
-        while (!q.empty()) {
-            int v = q.front().first;
-            long long cur_flow = q.front().second;
-            q.pop();
-
-            for (int i = 0; i < adj[v].size(); ++i) {
-                auto& edge = adj[v][i];
-                if (parent_node[edge.to] == -1 && edge.cap - edge.flow > 0) {
-                    parent_node[edge.to] = v;
-                    parent_edge[edge.to] = i;
-                    long long new_flow = min(cur_flow, edge.cap - edge.flow);
-                    if (edge.to == t) {
-                        pushed = new_flow;
-                        break;
-                    }
-                    q.push({edge.to, new_flow});
-                }
-            }
-            if (pushed) break;
-        }
-
-        if (pushed == 0) break;
-
-        flow += pushed;
-        int curr = t;
-        while (curr != s) {
-            int p = parent_node[curr];
-            int idx = parent_edge[curr];
-            int rev_idx = adj[p][idx].rev;
-
-            adj[p][idx].flow += pushed;
-            adj[curr][rev_idx].flow -= pushed;
-            curr = p;
-        }
+    size_t h1(uint64_t key) const {
+        uint64_t x = key ^ seed1;
+        x ^= x >> 33;
+        x *= 0xff51afd7ed558ccdULL;
+        x ^= x >> 33;
+        return x & (M - 1);
     }
-    return flow;
-}
+
+    size_t h2(uint64_t key) const {
+        uint64_t x = key ^ seed2;
+        x ^= x >> 33;
+        x *= 0xc4ceb9fe1a85ec53ULL;
+        x ^= x >> 33;
+        return x & (M - 1);
+    }
+
+    void rehash() {
+        vector<Entry> oldT1 = move(T1);
+        vector<Entry> oldT2 = move(T2);
+        
+        M *= 2;
+        T1.assign(M, {0, 0, false});
+        T2.assign(M, {0, 0, false});
+        
+        seed1 ^= 0x123456789ABCDEF0ULL;
+        seed2 ^= 0xFEDCBA9876543210ULL;
+        
+        for (const auto& e : oldT1) if (e.active) insert_internal(e.key, e.count);
+        for (const auto& e : oldT2) if (e.active) insert_internal(e.key, e.count);
+    }
+
+    void insert_internal(uint64_t key, int count) {
+        size_t p1 = h1(key);
+        if (!T1[p1].active) { T1[p1] = {key, count, true}; return; }
+        
+        size_t p2 = h2(key);
+        if (!T2[p2].active) { T2[p2] = {key, count, true}; return; }
+
+        Entry cur = {key, count, true};
+        for (int i = 0; i < 1000; ++i) {
+            p1 = h1(cur.key);
+            swap(cur, T1[p1]);
+            if (!cur.active) return;
+            
+            p2 = h2(cur.key);
+            swap(cur, T2[p2]);
+            if (!cur.active) return;
+        }
+        
+        rehash();
+        insert_internal(cur.key, cur.count);
+    }
+
+public:
+    CuckooHashTable(int initial_power_of_two = 524288) {
+        M = initial_power_of_two;
+        T1.assign(M, {0, 0, false});
+        T2.assign(M, {0, 0, false});
+        seed1 = 0x811c9dc5ULL;
+        seed2 = 0x1a2b3c4dULL;
+    }
+
+    void add(uint64_t key) {
+        size_t p1 = h1(key);
+        if (T1[p1].active && T1[p1].key == key) {
+            T1[p1].count++;
+            return;
+        }
+        size_t p2 = h2(key);
+        if (T2[p2].active && T2[p2].key == key) {
+            T2[p2].count++;
+            return;
+        }
+        insert_internal(key, 1);
+    }
+
+    int get(uint64_t key) const {
+        size_t p1 = h1(key);
+        if (T1[p1].active && T1[p1].key == key) return T1[p1].count;
+        size_t p2 = h2(key);
+        if (T2[p2].active && T2[p2].key == key) return T2[p2].count;
+        return 0;
+    }
+};
 
 int main() {
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    int n, m, p;
-    if (!(cin >> n >> m >> p)) return 0;
+    int n;
+    if (!(cin >> n)) return 0;
 
-    int S = 0;
-    int T = n + m + p + 1;
+    vector<uint64_t> A(n), B(n), C(n);
+    CuckooHashTable banMachine;
 
-    adj.assign(T + 1, vector<Edge>());
+    for (int i = 0; i < n; ++i) {
+        string s; cin >> s;
+        A[i] = fnv1a(s);
+        banMachine.add(A[i]);
+    }
 
-    long long total_V = 0;
+    for (int i = 0; i < n; ++i) {
+        string s; cin >> s;
+        B[i] = fnv1a(s);
+        banMachine.add(B[i]);
+    }
 
+    for (int i = 0; i < n; ++i) {
+        string s; cin >> s;
+        C[i] = fnv1a(s);
+        banMachine.add(C[i]);
+    }
 
-    for (int i = 1; i <= n; ++i) {
-        long long v;
-        int k;
-        cin >> v >> k;
-        total_V += v;
-        
-        add_edge(S, i, v);
-        
-        for (int j = 0; j < k; ++j) {
-            int mod_idx;
-            cin >> mod_idx;
-            add_edge(i, n + mod_idx, INF); 
+    auto calculate_score = [&](const vector<uint64_t>& files) {
+        int score = 0;
+        for (int i = 0; i < n; ++i) {
+            int cnt = banMachine.get(files[i]);
+            if (cnt == 1) score += 3;
+            else if (cnt == 2) score += 1;
         }
-    }
+        return score;
+    };
 
-    vector<long long> C(m + 1);
-    for (int j = 1; j <= m; ++j) {
-        cin >> C[j];
-    }
+    int scoreA = calculate_score(A);
+    int scoreB = calculate_score(B);
+    int scoreC = calculate_score(C);
 
-    vector<bool> in_pair(m + 1, false);
-
-    for (int idx = 1; idx <= p; ++idx) {
-        int a, b;
-        long long d;
-        cin >> a >> b >> d;
-        in_pair[a] = true;
-        in_pair[b] = true;
-
-        C[a] = min(C[a], d);
-        C[b] = min(C[b], d);
-
-        long long delta = C[a] + C[b] - d;
-
-        add_edge(n + a, T, d - C[b]);
-        add_edge(n + b, T, d - C[a]);
-
-        int aux = n + m + idx;
-        add_edge(aux, T, delta);
-        add_edge(n + a, aux, INF); 
-        add_edge(n + b, aux, INF); 
-    }
-
-
-    for (int j = 1; j <= m; ++j) {
-        if (!in_pair[j]) {
-            add_edge(n + j, T, C[j]);
-        }
-    }
-
-    long long max_profit = total_V - edmonds_karp(S, T);
-    cout << max_profit << "\n";
+    cout << scoreA << " " << scoreB << " " << scoreC << "\n";
 
     return 0;
 }
