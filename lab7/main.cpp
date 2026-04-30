@@ -18,7 +18,7 @@
 class CityCodeResolver {
     std::unordered_map<std::string, std::string> city_codes_;
     std::string api_key_;
-    std::string cache_file_ = "yandex_stations_list.json"; // Сохраняем сырые 30МБ
+    std::string cache_file_ = "yandex_stations_list.json";
 
 public:
     CityCodeResolver(const std::string& api_key) : api_key_(api_key) {
@@ -56,10 +56,10 @@ private:
                 }
 
                 if (!title.empty() && !code.empty()) {
-                    if (code[0] == 'c') { // Приоритет отдается городам (код начинается с 'c')
+                    if (code[0] == 'c') {
                         city_codes_[title] = code;
                     } else if (city_codes_.find(title) == city_codes_.end()) {
-                        city_codes_[title] = code; // Сохраняем регион или станцию, если город не найден
+                        city_codes_[title] = code; 
                     }
                 }
 
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
         std::cout << "Введите город отправления (с большой буквы, или 0 для выхода): ";
         
         std::string from_city;
-        std::getline(std::cin >> std::ws, from_city); // std::ws пропустит пробелы от предыдущих вводов
+        std::getline(std::cin >> std::ws, from_city);
 
         if (from_city == "0" || from_city == "q" || from_city == "Q") {
             std::cout << "Завершение программы...\n";
@@ -149,7 +149,6 @@ int main(int argc, char** argv) {
         std::string to_city;
         std::getline(std::cin, to_city);
 
-        // Удаляем возможные лишние пробелы и символ \r с концов строк (проблема Windows-консоли)
         while (!from_city.empty() && std::isspace(static_cast<unsigned char>(from_city.back()))) from_city.pop_back();
         while (!to_city.empty() && std::isspace(static_cast<unsigned char>(to_city.back()))) to_city.pop_back();
 
