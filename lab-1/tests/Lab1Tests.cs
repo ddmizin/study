@@ -3,99 +3,70 @@ using System.Collections.Generic;
 using Lab1.Models;
 using Lab1.Routing;
 
+using Xunit;
 namespace Lab1.Tests;
 
-public static class TestRunner
+public class Lab1Tests
 {
-    public static void AssertTrue(bool condition, string message)
-    {
-        if (!condition) throw new Exception($"Test failed: {message}");
-    }
-
-    public static void AssertThrows<T>(Action action) where T : Exception
-    {
-        try
-        {
-            action();
-            throw new Exception($"Expected exception {typeof(T).Name} was not thrown.");
-        }
-        catch (T) { } // Success
-    }
-    
-    public static void RunAll()
-    {
-        Console.WriteLine("Running tests...");
-        TestSkuCreation();
-        TestTruckCreation();
-        TestTruckLoading();
-        TestTruckUnloading();
-        TestTruckMoving();
-        TestEmployeeMultipleTrips();
-        TestWarehouseCapacityLimit();
-        TestWarehouseDispatching();
-        TestWarehouseStaffCalculations();
-        TestWarehouseAcceptance();
-        TestWarehouseDispatchTime();
-        TestAcceptanceStepErrors();
-        TestDispatchStepErrors();
-        TestRouteListExecution();
-        TestRouteListInterruption();
-        Console.WriteLine("All tests passed!");
-    }
-
-    private static void TestSkuCreation()
+    [Fact]
+    public void TestSkuCreation()
     {
         var sku = new Sku(Guid.NewGuid(), "Box", new VolumeWeight(10));
-        AssertTrue(sku.VolumeWeight.Value == 10, "SKU created properly");
-        AssertThrows<ArgumentException>(() => new Sku(Guid.NewGuid(), "Box", new VolumeWeight(-5)));
-        AssertThrows<ArgumentException>(() => new Sku(Guid.NewGuid(), "Box", new VolumeWeight(0)));
+        Assert.True(sku.VolumeWeight.Value == 10, "SKU created properly");
+        Assert.Throws<ArgumentException>(() => new Sku(Guid.NewGuid(), "Box", new VolumeWeight(-5)));
+        Assert.Throws<ArgumentException>(() => new Sku(Guid.NewGuid(), "Box", new VolumeWeight(0)));
     }
 
-    private static void TestTruckCreation()
+    [Fact]
+    public void TestTruckCreation()
     {
-        AssertThrows<ArgumentException>(() => new Speed(0));
-        AssertThrows<ArgumentException>(() => new Speed(-10));
+        Assert.Throws<ArgumentException>(() => new Speed(0));
+        Assert.Throws<ArgumentException>(() => new Speed(-10));
     }
 
-    private static void TestTruckLoading()
+    [Fact]
+    public void TestTruckLoading()
     {
         var truck = new Truck(new VolumeWeight(100), new Speed(20), new Coordinates(0, 0));
         var sku = new Sku(Guid.NewGuid(), "Item", new VolumeWeight(40));
         
         truck.Load(new Dictionary<Sku, int> { { sku, 2 } });
-        AssertTrue(truck.Cargo[sku] == 2, "Cargo loaded");
+        Assert.True(truck.Cargo[sku] == 2, "Cargo loaded");
         
-        AssertThrows<InvalidOperationException>(() => truck.Load(new Dictionary<Sku, int> { { sku, 1 } })); // 80 + 40 > 100
+        Assert.Throws<InvalidOperationException>(() => truck.Load(new Dictionary<Sku, int> { { sku, 1 } })); // 80 + 40 > 100
     }
 
-    private static void TestTruckUnloading()
+    [Fact]
+    public void TestTruckUnloading()
     {
         var truck = new Truck(new VolumeWeight(100), new Speed(20), new Coordinates(0, 0));
         var sku = new Sku(Guid.NewGuid(), "Item", new VolumeWeight(40));
         truck.Load(new Dictionary<Sku, int> { { sku, 2 } });
         
         truck.Unload(new Dictionary<Sku, int> { { sku, 1 } });
-        AssertTrue(truck.Cargo[sku] == 1, "Cargo unloaded correctly");
+        Assert.True(truck.Cargo[sku] == 1, "Cargo unloaded correctly");
         
-        AssertThrows<InvalidOperationException>(() => truck.Unload(new Dictionary<Sku, int> { { sku, 2 } })); // Try to unload more than available
+        Assert.Throws<InvalidOperationException>(() => truck.Unload(new Dictionary<Sku, int> { { sku, 2 } })); // Try to unload more than available
     }
 
-    private static void TestTruckMoving()
+    [Fact]
+    public void TestTruckMoving()
     {
         var truck = new Truck(new VolumeWeight(100), new Speed(20), new Coordinates(0, 0)); 
         var dest = new Coordinates(0, 1); 
         var route = new MovementStep(dest);
         
         var result = route.Execute(truck);
-        AssertTrue(result is RouteStepResult.Success, "Movement success");
+        Assert.True(result is RouteStepResult.Success, "Movement success");
         if (result is RouteStepResult.Success s)
         {
-            AssertTrue(s.Duration.TotalSeconds == 5550, "Correct movement time");
+            Assert.True(s.Duration.TotalSeconds == 5550, "Correct movement time");
         }
-        AssertTrue(truck.Coordinates.Latitude == 0 && truck.Coordinates.Longitude == 1, "Coordinates updated");
+        Assert.True(truck.Coordinates.Latitude == 0 && truck.Coordinates.Longitude == 1, "Coordinates updated");
     }
 
-    private static void TestEmployeeMultipleTrips()
+    [Fact]
+    public void TestEmployeeMultipleTrips()
     {
         var employee = new Employee(new VolumeWeight(10), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10));
         var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(500), new[] { employee });
@@ -109,23 +80,25 @@ public static class TestRunner
         // Since it's Acceptance, truck release time is max(unloadDoneTime).
         // 1st trip unload at 5, 2nd trip unload at 15 + 5 = 20, 3rd trip unload at 30 + 5 = 35.
         // Therefore, duration = 35.
-        AssertTrue(duration.TotalSeconds == 35, $"Multiple trips duration incorrect, got {duration.TotalSeconds}");
+        Assert.True(duration.TotalSeconds == 35, $"Multiple trips duration incorrect, got {duration.TotalSeconds}");
     }
 
-    private static void TestWarehouseCapacityLimit()
+    [Fact]
+    public void TestWarehouseCapacityLimit()
     {
         var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
         var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(100), new[] { employee });
         var sku = new Sku(Guid.NewGuid(), "HeavyItem", new VolumeWeight(60));
         
         warehouse.Accept(new Dictionary<Sku, int> { { sku, 1 } });
-        AssertTrue(warehouse.Stock[sku] == 1, "Item accepted");
+        Assert.True(warehouse.Stock[sku] == 1, "Item accepted");
         
-        AssertThrows<InvalidOperationException>(() => warehouse.Accept(new Dictionary<Sku, int> { { sku, 1 } })); // 60 + 60 > 100
-        AssertTrue(warehouse.Stock[sku] == 1, "Stock didn't change on failure");
+        Assert.Throws<InvalidOperationException>(() => warehouse.Accept(new Dictionary<Sku, int> { { sku, 1 } })); // 60 + 60 > 100
+        Assert.True(warehouse.Stock[sku] == 1, "Stock didn't change on failure");
     }
 
-    private static void TestWarehouseDispatching()
+    [Fact]
+    public void TestWarehouseDispatching()
     {
         var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
         var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(100), new[] { employee });
@@ -134,12 +107,13 @@ public static class TestRunner
         warehouse.Accept(new Dictionary<Sku, int> { { sku, 1 } });
         
         warehouse.Dispatch(new Dictionary<Sku, int> { { sku, 1 } });
-        AssertTrue(!warehouse.Stock.ContainsKey(sku), "Item dispatched");
+        Assert.True(!warehouse.Stock.ContainsKey(sku), "Item dispatched");
         
-        AssertThrows<InvalidOperationException>(() => warehouse.Dispatch(new Dictionary<Sku, int> { { sku, 1 } })); // Not enough stock
+        Assert.Throws<InvalidOperationException>(() => warehouse.Dispatch(new Dictionary<Sku, int> { { sku, 1 } })); // Not enough stock
     }
 
-    private static void TestWarehouseStaffCalculations()
+    [Fact]
+    public void TestWarehouseStaffCalculations()
     {
         var employee1 = new Employee(new VolumeWeight(10), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10));
         var employee2 = new Employee(new VolumeWeight(10), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10));
@@ -151,10 +125,11 @@ public static class TestRunner
         // E1 (or E2): 2nd trip (5), starts at 15, unload at 20, available at 30
         // Duration = max unload time = 20
         var duration = warehouse.CalculateAcceptanceTime(new VolumeWeight(25));
-        AssertTrue(duration.TotalSeconds == 20, $"Multiple employees duration incorrect, got {duration.TotalSeconds}");
+        Assert.True(duration.TotalSeconds == 20, $"Multiple employees duration incorrect, got {duration.TotalSeconds}");
     }
 
-    private static void TestWarehouseAcceptance()
+    [Fact]
+    public void TestWarehouseAcceptance()
     {
         var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
         var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(500), new[] { employee });
@@ -165,16 +140,17 @@ public static class TestRunner
         var acceptStep = new AcceptanceStep(warehouse, new Dictionary<Sku, int> { { sku, 1 } });
         var result = acceptStep.Execute(truck);
         
-        AssertTrue(result is RouteStepResult.Success, "Acceptance success");
+        Assert.True(result is RouteStepResult.Success, "Acceptance success");
         if (result is RouteStepResult.Success s)
         {
-            AssertTrue(s.Duration.TotalSeconds == 40, $"Duration was {s.Duration.TotalSeconds}, expected 40");
+            Assert.True(s.Duration.TotalSeconds == 40, $"Duration was {s.Duration.TotalSeconds}, expected 40");
         }
-        AssertTrue(warehouse.Stock[sku] == 1, "Item in warehouse");
-        AssertTrue(truck.Cargo.Count == 0, "Truck is empty");
+        Assert.True(warehouse.Stock[sku] == 1, "Item in warehouse");
+        Assert.True(truck.Cargo.Count == 0, "Truck is empty");
     }
 
-    private static void TestWarehouseDispatchTime()
+    [Fact]
+    public void TestWarehouseDispatchTime()
     {
         var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
         var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(500), new[] { employee });
@@ -185,14 +161,15 @@ public static class TestRunner
         var dispatchStep = new DispatchStep(warehouse, new Dictionary<Sku, int> { { sku, 1 } });
         var result = dispatchStep.Execute(truck);
         
-        AssertTrue(result is RouteStepResult.Success, "Dispatch success");
+        Assert.True(result is RouteStepResult.Success, "Dispatch success");
         if (result is RouteStepResult.Success s)
         {
-            AssertTrue(s.Duration.TotalSeconds == 60, $"Duration was {s.Duration.TotalSeconds}, expected 60");
+            Assert.True(s.Duration.TotalSeconds == 60, $"Duration was {s.Duration.TotalSeconds}, expected 60");
         }
     }
 
-    private static void TestAcceptanceStepErrors()
+    [Fact]
+    public void TestAcceptanceStepErrors()
     {
         var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
         var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(100), new[] { employee });
@@ -203,21 +180,22 @@ public static class TestRunner
         
         // 1. Not enough items in truck
         var res1 = acceptStep.Execute(truck);
-        AssertTrue(res1 is RouteStepResult.Failure, "Failure due to lack of items in truck");
+        Assert.True(res1 is RouteStepResult.Failure, "Failure due to lack of items in truck");
         
         // 2. Not enough capacity in warehouse
         truck.Load(new Dictionary<Sku, int> { { sku, 2 } });
         var acceptStep2 = new AcceptanceStep(warehouse, new Dictionary<Sku, int> { { sku, 2 } }); // 120 > 100
         var res2 = acceptStep2.Execute(truck);
-        AssertTrue(res2 is RouteStepResult.Failure, "Failure due to lack of capacity in warehouse");
+        Assert.True(res2 is RouteStepResult.Failure, "Failure due to lack of capacity in warehouse");
         
         // 3. Truck too far
         truck.MoveTo(new Coordinates(1, 1));
         var res3 = acceptStep.Execute(truck);
-        AssertTrue(res3 is RouteStepResult.Failure, "Failure due to distance > 10m");
+        Assert.True(res3 is RouteStepResult.Failure, "Failure due to distance > 10");
     }
 
-    private static void TestDispatchStepErrors()
+    [Fact]
+    public void TestDispatchStepErrors()
     {
         var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
         var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(100), new[] { employee });
@@ -228,22 +206,23 @@ public static class TestRunner
         
         // 1. Not enough items in warehouse
         var res1 = dispatchStep.Execute(truck);
-        AssertTrue(res1 is RouteStepResult.Failure, "Failure due to lack of items in warehouse");
+        Assert.True(res1 is RouteStepResult.Failure, "Failure due to lack of items in warehouse");
         
         // 2. Not enough capacity in truck
         warehouse.Accept(new Dictionary<Sku, int> { { sku, 1 } });
         truck.Load(new Dictionary<Sku, int> { { sku, 1 } }); // Truck now has 60, only 40 capacity left.
         var res2 = dispatchStep.Execute(truck);
-        AssertTrue(res2 is RouteStepResult.Failure, "Failure due to lack of capacity in truck");
+        Assert.True(res2 is RouteStepResult.Failure, "Failure due to lack of capacity in truck");
         truck.Unload(new Dictionary<Sku, int> { { sku, 1 } });
         
         // 3. Truck too far
         truck.MoveTo(new Coordinates(1, 1));
         var res3 = dispatchStep.Execute(truck);
-        AssertTrue(res3 is RouteStepResult.Failure, "Failure due to distance > 10m");
+        Assert.True(res3 is RouteStepResult.Failure, "Failure due to distance > 10");
     }
 
-    private static void TestRouteListExecution()
+    [Fact]
+    public void TestRouteListExecution()
     {
         var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
         var warehouse1 = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(500), new[] { employee });
@@ -262,14 +241,15 @@ public static class TestRunner
         });
         
         var result = route.Execute(truck);
-        AssertTrue(result is RouteStepResult.Success, "Route success");
+        Assert.True(result is RouteStepResult.Success, "Route success");
         if (result is RouteStepResult.Success s)
         {
-            AssertTrue(s.Duration.TotalSeconds == (60 + 5550 + 40), "Route correct duration");
+            Assert.True(s.Duration.TotalSeconds == (60 + 5550 + 40), "Route correct duration");
         }
     }
 
-    private static void TestRouteListInterruption()
+    [Fact]
+    public void TestRouteListInterruption()
     {
         var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
         var warehouse1 = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(500), new[] { employee });
@@ -286,8 +266,64 @@ public static class TestRunner
         });
         
         var result = route.Execute(truck);
-        AssertTrue(result is RouteStepResult.Failure, "Route fails if one step fails");
-        AssertTrue(truck.Coordinates.Latitude == 0 && truck.Coordinates.Longitude == 0, "Truck didn't move after failure");
+        Assert.True(result is RouteStepResult.Failure, "Route fails if one step fails");
+        Assert.True(truck.Coordinates.Latitude == 0 && truck.Coordinates.Longitude == 0, "Truck didn't move after failure");
+    }
+
+    [Fact]
+    public void TestZeroOrNegativeQuantities()
+    {
+        var truck = new Truck(new VolumeWeight(100), new Speed(20), new Coordinates(0, 0));
+        var sku = new Sku(Guid.NewGuid(), "Item", new VolumeWeight(10));
+        
+        Assert.Throws<ArgumentException>(() => truck.Load(new Dictionary<Sku, int> { { sku, 0 } }));
+        Assert.Throws<ArgumentException>(() => truck.Load(new Dictionary<Sku, int> { { sku, -5 } }));
+        
+        var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
+        var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(100), new[] { employee });
+        
+        Assert.Throws<ArgumentException>(() => warehouse.Accept(new Dictionary<Sku, int> { { sku, 0 } }));
+        Assert.Throws<ArgumentException>(() => warehouse.Accept(new Dictionary<Sku, int> { { sku, -2 } }));
+    }
+
+    [Fact]
+    public void TestEmptyDictionary()
+    {
+        var truck = new Truck(new VolumeWeight(100), new Speed(20), new Coordinates(0, 0));
+        truck.Load(new Dictionary<Sku, int>());
+        Assert.True(truck.Cargo.Count == 0, "Empty dictionary loaded safely");
+        
+        var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
+        var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(100), new[] { employee });
+        
+        warehouse.Accept(new Dictionary<Sku, int>());
+        Assert.True(warehouse.Stock.Count == 0, "Empty dictionary accepted safely");
+    }
+
+    [Fact]
+    public void TestFloatingPointPrecision()
+    {
+        var truck = new Truck(new VolumeWeight(100), new Speed(20), new Coordinates(0, 0));
+        var sku1 = new Sku(Guid.NewGuid(), "Item1", new VolumeWeight(33.333333333333333333333333333));
+        
+        truck.Load(new Dictionary<Sku, int> { { sku1, 3 } });
+        Assert.True(truck.Cargo.ContainsKey(sku1), "Precision test passed");
+    }
+
+    [Fact]
+    public void TestDistanceExactly10eters()
+    {
+        var employee = new Employee(new VolumeWeight(50), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(20));
+        var warehouse = new Warehouse(Guid.NewGuid(), new Coordinates(0, 0), new VolumeWeight(100), new[] { employee });
+        var sku = new Sku(Guid.NewGuid(), "Item", new VolumeWeight(10));
+        
+        var truck = new Truck(new VolumeWeight(100), new Speed(20), new Coordinates(0, 10.0 / 111000.0)); // Exactly 10 away
+        truck.Load(new Dictionary<Sku, int> { { sku, 1 } });
+        
+        var acceptStep = new AcceptanceStep(warehouse, new Dictionary<Sku, int> { { sku, 1 } });
+        var result = acceptStep.Execute(truck);
+        Assert.True(result is RouteStepResult.Success, "Acceptance at exactly 10 meters distance is successful");
     }
 }
+
 
