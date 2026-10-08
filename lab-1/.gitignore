@@ -1,0 +1,39 @@
+# IDE и локальные настройки
+.vs/
+.idea/
+*.suo
+*.user
+*.userprefs
+*.sln.docstates
+*.DotSettings.user
+
+# Результаты сборки (артефакты компиляции)
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+# Файлы кэша и временные файлы
+*.cache
+*.tmp
+*.temp
+*.log
+*.bak
+
+# Rider / ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# MacOS
+.DS_Store
+
+# Файлы, генерируемые ОС
+Thumbs.db
+ehthumbs.db
+Desktop.ini
